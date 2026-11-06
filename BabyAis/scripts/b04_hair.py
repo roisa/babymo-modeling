@@ -6,7 +6,7 @@
 Geometry is authored in Baby-Mo space (head centre (0,.012,.47), skull r~.122) and scaled to Ais (k)."""
 import bpy, bmesh, sys, math, random
 import numpy as np
-from mathutils import Vector, Quaternion
+from mathutils import Vector, Quaternion, Matrix
 from mathutils.bvhtree import BVHTree
 sys.path.insert(0, sys.argv[-1]); import ba_common as C
 root = sys.argv[1]
@@ -88,7 +88,7 @@ def vol(d, o):
     """Cohesive dome: volume grows from the part/crown to the widest point just above the ears.
     The waypoint offset only matters at the root (o < .006 -> root lift); LAYER_D separates layers."""
     th = math.degrees(math.acos(max(-1, min(1, d.z))))
-    v = 0.011 + 0.011 * min(max((th - 5) / 55, 0), 1) ** 0.7 + 0.006 * min(max((th - 55) / 35, 0), 1)
+    v = 0.014 + 0.010 * min(max((th - 5) / 55, 0), 1) ** 0.7 + 0.006 * min(max((th - 55) / 35, 0), 1)
     v *= 1 - 0.85 * max(0.0, -d.y - 0.25) / 0.75      # flatter at the forehead hairline
     if o < 0.0045: v = min(v, 0.0035)    # roots at the part sit close to the scalp
     return v + LAYER_D
@@ -131,8 +131,8 @@ for i in range(23):
     a = -74 + 148 * i / 22 + random.uniform(-1.5, 1.5)
     wp = [S(a * 0.35, 14, 0.004), S(a * 0.8, 52, 0.014), S(a, 92, 0.017)]
     p = scalp_path(wp)
-    zend = 0.294 + random.uniform(-0.007, 0.007) + 0.004 * (abs(a) / 74); WAVE_PH = random.uniform(0, 1.2)
-    add_lock(f"BackOuter_{i:02d}", p + hang(p[-1], zend, 0.004, random.uniform(0.003, 0.009), random.uniform(0.002, 0.006)), 0.044 + random.uniform(-0.004, 0.004), 0.0078, "back_out", tipw=0.34)
+    zend = 0.294 + random.uniform(-0.012, 0.010) + 0.004 * (abs(a) / 74); WAVE_PH = random.uniform(0, 1.2)
+    add_lock(f"BackOuter_{i:02d}", p + hang(p[-1], zend, 0.004, random.uniform(0.008, 0.014), random.uniform(0.004, 0.008)), 0.044 + random.uniform(-0.004, 0.004), 0.0078, "back_out", tipw=0.34)
 # ---------------- 2c top layer: shorter crown layer over the bob (visible layering like the reference)
 LAYER_D = 0.0018
 for i in range(15):
@@ -141,13 +141,23 @@ for i in range(15):
     p = scalp_path(wp); WAVE_PH = random.uniform(0, 1.0)
     add_lock(f"TopLayer_{i:02d}", p + hang(p[-1], 0.318 + random.uniform(-0.006, 0.006), 0.004, 0.004, 0.004), 0.044 + random.uniform(-0.004, 0.004), 0.007, "layer", tipw=0.28)
 LAYER_D = 0.0
+# ---------------- 2d upper-side fill: crown -> just above the ear (closes the gap between side + back sections)
+LAYER_D = 0.0010
+for sgn in (1, -1):
+    for a in (60, 68, 76, 84, 92):
+        wp = [S(sgn * a * 0.35, 12, 0.004), S(sgn * a * 0.9, 46, 0.014), S(sgn * a, 76, 0.016), S(sgn * (a - 8), 90, 0.017)]
+        p = scalp_path(wp)
+        add_lock(f"UpperSide_{'L' if sgn > 0 else 'R'}{a}", p, 0.046, 0.0075, "layer", tipw=0.35)
 LAYER_D = 0.0012
 # ---------------- 3 side sections: from the part, over the top of the ear, tucked behind it
 def side_lock(name, sgn, phi, a_mid, t_mid, a_land, t_land, zend, w=0.034, off=0.016):
     wp = [(part_dir(phi), 0.003), S(sgn * a_mid, t_mid, off * 0.85), S(sgn * a_land, t_land, off),
-          S(sgn * 82, 90, off), S(sgn * 58, 93, off)]
+          S(sgn * 80, 88, off), S(sgn * 60, 97, off)]
     p = scalp_path(wp)
-    add_lock(name, p + hang(p[-1], zend + random.uniform(-0.005, 0.005), 0.003, random.uniform(0.0, 0.006), 0.004), w, 0.008, "side", tipw=0.32)
+    global BULGE
+    _b = BULGE; BULGE = 0.015
+    add_lock(name, p + hang(p[-1], zend + random.uniform(-0.006, 0.006), 0.004, random.uniform(-0.009, -0.003), random.uniform(0.003, 0.007)), w, 0.008, "side", tipw=0.32)
+    BULGE = _b
 # her left (long side of the part)
 L = [(-26, 70, 40, 80, 82), (-14, 86, 46, 88, 84), (-2, 98, 50, 96, 84), (10, 108, 54, 104, 83), (22, 118, 57, 110, 82)]
 for j, (phi, am, tm, al, tl) in enumerate(L):
@@ -156,16 +166,24 @@ for j, (phi, am, tm, al, tl) in enumerate(L):
 R = [(-26, 68, 40, 80, 83), (-14, 80, 44, 88, 85), (-2, 90, 47, 94, 85), (10, 100, 50, 100, 84), (22, 108, 53, 104, 83)]
 for j, (phi, am, tm, al, tl) in enumerate(R):
     side_lock(f"SideR_{j}", -1, phi, am, tm, al, tl, 0.298 + 0.002 * j, w=0.040)
+# her left, top-front fill (between the fringe and the left side section)
+for j, (phi, am, tm, al, tl) in enumerate([(18, 116, 40, 104, 70), (26, 128, 44, 110, 71), (34, 140, 50, 116, 72), (42, 150, 54, 122, 73)]):
+    side_lock(f"SideLF_{j}", 1, phi, am, tm, al, tl, 0.300 + 0.003 * j, w=0.044)
+# her right, top-front fill (between the short side of the part and the right side section)
+for j, (phi, am, tm, al, tl) in enumerate([(20, 118, 42, 106, 71), (28, 128, 46, 112, 72), (36, 138, 50, 118, 73)]):
+    side_lock(f"SideRF_{j}", -1, phi, am, tm, al, tl, 0.300 + 0.003 * j, w=0.042)
 LAYER_D = 0.0008
 # ---------------- 4 side-swept fringe: from the front of the part across the upper forehead
 # locks from the front of the part that fall down each side of the forehead (reference: forehead framed in an arch)
-FL = [(34, 158, 64, 132, 78, 0.040), (44, 166, 67, 138, 80, 0.036), (54, 174, 68, 144, 81, 0.032)]    # her left (long side)
-FRt = [(30, -158, 62, -130, 78, 0.040), (40, -170, 66, -142, 80, 0.034), (52, -176, 68, -148, 81, 0.030)]                              # her right
+FL = [(34, 158, 59, 132, 72, 0.040), (44, 166, 62, 138, 74, 0.036), (54, 174, 63, 144, 75, 0.032)]    # her left (long side)
+FRt = [(30, -158, 58, -130, 72, 0.040), (40, -170, 61, -142, 74, 0.034), (52, -176, 63, -148, 75, 0.030)]                              # her right
 for j, (phi, a1, t1, a2, t2, w) in enumerate(FL + FRt):
     sgn = 1 if j < len(FL) else -1
-    wp = [(part_dir(phi), 0.003), S(a1, t1, 0.008), S(a2, t2, 0.010), S(sgn * 118, 86, 0.013), S(sgn * 86, 92, 0.016), S(sgn * 58, 93, 0.016)]
+    wp = [(part_dir(phi), 0.003), S(a1, t1, 0.008), S(a2, t2, 0.010), S(sgn * 112, 80, 0.013), S(sgn * 84, 88, 0.016), S(sgn * 60, 97, 0.016)]
     p = scalp_path(wp); WAVE_PH = random.uniform(0, 1.0)
-    add_lock(f"Fringe_{j}", p + hang(p[-1], 0.300 + 0.004 * j, 0.003, 0.004, 0.004), w * 1.1, 0.0055, "fringe", tipw=0.3)
+    BULGE = 0.015
+    add_lock(f"Fringe_{j}", p + hang(p[-1], 0.300 + 0.004 * j, 0.004, -0.006, 0.005), w * 1.1, 0.0055, "fringe", tipw=0.3)
+    BULGE = 0.011
 LAYER_D = -0.004
 # ---------------- 5 face-framing temple locks in front of the ears (short, inward curl)
 for sgn, phi, w in ():   # face-frame locks removed (read as hooks); side mass frames the face
@@ -188,8 +206,10 @@ def clear(pts, t):
     return out
 
 # ---------------- build meshes
-def build(name, pts, w, t, tipw, mat):
+LOCK_FRAMES = []
+def build(name, pts, w, t, tipw, mat, layer=""):
     n = 34
+    frame = []
     c = catmull(pts, n)
     c = clear(c, t)
     c = catmull(c[::2] + [c[-1]], n)   # re-smooth after clearance
@@ -203,6 +223,7 @@ def build(name, pts, w, t, tipw, mat):
         u = i / (n - 1)
         wf = (0.6 + 0.4 * min(u / 0.12, 1)) * (1 - (1 - tipw) * max(0, (u - 0.75) / 0.25) ** 1.5)
         tf = (0.55 + 0.45 * min(u / 0.12, 1)) * (1 - 0.55 * max(0, (u - 0.8) / 0.2))
+        frame.append((p.copy(), B.copy(), Np.copy(), wf, tf))
         ring = []
         for s in range(seg):
             ang = 2 * math.pi * s / seg
@@ -223,6 +244,7 @@ def build(name, pts, w, t, tipw, mat):
         for s in range(seg):
             a, b = ring[s], ring[(s + 1) % seg]
             bm.faces.new((b, a, ctr) if rev else (a, b, ctr))
+    LOCK_FRAMES.append((name, layer, w, t, frame))
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-7)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     bm.normal_update()
@@ -242,7 +264,7 @@ for layer, items in groups.items():
     me_l = bpy.data.meshes.new(LAYER_NAME[layer])
     tmp = []
     for name, pts, w, t, tipw in items:
-        bm = build(name, pts, w, t, tipw, mat)
+        bm = build(name, pts, w, t, tipw, mat, layer)
         m = bpy.data.meshes.new("tmp"); bm.to_mesh(m); bm.free(); tmp.append(m)
     # merge via join
     ob = bpy.data.objects.new(LAYER_NAME[layer], tmp[0]); coll.objects.link(ob)
@@ -281,6 +303,73 @@ for ob in objs:
     am = ob.modifiers.new("Armature", 'ARMATURE'); am.object = rig
     sd = ob.modifiers.new("Subdivision", 'SUBSURF'); sd.levels = 1; sd.render_levels = 2
     print(ob.name, "verts", len(ob.data.vertices))
+# ---------------- 6 soft strand layer: real hair curves following every lock (fluffy, fine strands)
+import os
+DENS = float(os.environ.get("STRAND_DENS", "4600"))      # strands per metre of lock width
+FLY = float(os.environ.get("STRAND_FLY", "0.06"))
+RAD = float(os.environ.get("STRAND_RAD", "0.00022"))
+rng = random.Random(11)
+def lerp_frame(frame, u):
+    x = u * (len(frame) - 1); i = min(int(x), len(frame) - 2); f = x - i
+    a, b = frame[i], frame[i + 1]
+    return (a[0].lerp(b[0], f), a[1].lerp(b[1], f).normalized(), a[2].lerp(b[2], f).normalized(), a[3] + (b[3] - a[3]) * f, a[4] + (b[4] - a[4]) * f)
+strands = []   # list of (points[], radius_root)
+for name, layer, w, t, frame in LOCK_FRAMES:
+    n_s = max(12, int(w * DENS))
+    n_cl = max(2, int(w / 0.011))
+    centers = [rng.uniform(-0.85, 0.85) for _ in range(n_cl)]
+    cl_off = [rng.uniform(-0.6, 0.6) for _ in range(n_cl)]
+    for j in range(n_s):
+        fly = rng.random() < FLY
+        sx = rng.uniform(-1, 1)
+        rr = 1.0 - abs(rng.gauss(0, 0.35)) if not fly else rng.uniform(1.25, 1.9)
+        u0, u1 = rng.uniform(0.0, 0.05), rng.uniform(0.9, 1.0) if not fly else rng.uniform(0.55, 0.95)
+        ph1, ph2 = rng.uniform(0, 6.28), rng.uniform(0, 6.28)
+        f1, f2 = rng.uniform(0.6, 1.6), rng.uniform(0.8, 2.0)
+        a1 = rng.uniform(0.0003, 0.0011) * (2.2 if fly else 1); a2 = rng.uniform(0.0002, 0.0008) * (2.0 if fly else 1)
+        fan = rng.uniform(-1, 1)
+        ci = min(range(n_cl), key=lambda c_: abs(centers[c_] - sx)); cx_ = centers[ci]
+        pts = []
+        npts = 18
+        for q in range(npts):
+            u = u0 + (u1 - u0) * q / (npts - 1)
+            c, B, Np, wf, tf = lerp_frame(frame, u)
+            tip = max(0.0, (u - 0.78) / 0.22)
+            clump = 0.0 if fly else 0.62 * min(max((u - 0.35) / 0.55, 0), 1) ** 1.2
+            sx_u = sx + (cx_ - sx) * clump
+            across = w * 0.5 * wf * sx_u * (1 + 0.35 * tip) + (fan * 0.4 + cl_off[ci]) * 0.004 * tip * tip
+            up = t * 0.5 * tf * rr + (0.0018 * tip * tip if fly else 0)
+            jit = B * a1 * math.sin(6.283 * f1 * u + ph1) + Np * a2 * math.sin(6.283 * f2 * u + ph2)
+            pts.append((c + B * across + Np * up + jit) * k)
+        strands.append((pts, RAD * (0.6 if fly else 1.0) * rng.uniform(0.8, 1.15)))
+hc = bpy.data.hair_curves.new("Ais_Hair_Strands")
+hc.add_curves([len(p) for p, _ in strands])
+flat = [c for p, _ in strands for v in p for c in v]
+hc.attributes["position"].data.foreach_set("vector", flat)
+rad_at = hc.attributes.get("radius") or hc.attributes.new("radius", 'FLOAT', 'POINT')
+radii = []
+for p, r in strands:
+    m = len(p)
+    radii += [r * k * (1 - 0.8 * (q / (m - 1)) ** 1.6) for q in range(m)]
+rad_at.data.foreach_set("value", radii)
+hob = bpy.data.objects.new("Ais_Hair_Strands", hc); coll.objects.link(hob)
+smat = bpy.data.materials.get("M_Ais_HairStrands") or bpy.data.materials.new("M_Ais_HairStrands")
+hc.materials.append(smat)
+nt = smat.node_tree; nt.nodes.clear()
+hb = nt.nodes.new("ShaderNodeBsdfHairPrincipled"); hb.location = (0, 0)
+try: hb.model = 'CHIANG'
+except Exception: pass
+hb.parametrization = 'MELANIN'
+hb.inputs["Melanin"].default_value = 0.985; hb.inputs["Melanin Redness"].default_value = 0.45
+hb.inputs["Roughness"].default_value = 0.28; hb.inputs["Radial Roughness"].default_value = 0.35
+hb.inputs["Random Color"].default_value = 0.12; hb.inputs["Random Roughness"].default_value = 0.15
+o = nt.nodes.new("ShaderNodeOutputMaterial"); o.location = (300, 0); nt.links.new(hb.outputs[0], o.inputs["Surface"])
+# rigid to the head, like the mesh hair (bone parent keeps it in every pose/animation)
+bpy.context.view_layer.update()
+hob.parent = rig; hob.parent_type = 'BONE'; hob.parent_bone = "DEF-spine.006"
+bpy.context.view_layer.update()
+hob.matrix_world = Matrix.Identity(4)
+print("strands", len(strands), "points", len(flat) // 3)
 rig.data.pose_position = 'POSE'
 # provisional hair shader (final look-dev in batch 06)
 mat.use_nodes = True

@@ -96,6 +96,19 @@ Before and after sheets: `renders/progress/refine2_*.png`. The final renders, tu
 - The moon is bigger, the sleeves and cuffs a little puffier.
 - The colour look changes to **AgX – Punchy** (exposure −0.4) for the saturated reference palette.
 
+**07d Round 4: fluffy soft-strand hair** (iterated against `reference/BabyAis_reference_v2.png`).
+- **Strand layer (new):** `Ais_Hair_Strands` is a real Blender hair-curves object with about 18,000 fine strands. They are generated along every sculpted lock, follow its flow and sit mostly on its outer surface. Each strand has a gentle low-frequency wave, a staggered tip, and clumps gathering toward the ends for soft, piecey tips. About 6% are lifted flyaways for a fluffy halo.
+- **Strand shader:** Principled Hair BSDF (Chiang), melanin 0.985 for near-black with warm brown highlights, slight random colour and roughness.
+- **Rigging:** the strands are bone-parented to `DEF-spine.006`, so they move rigidly with the head in every animation, like the mesh hair.
+- **Mesh locks:** they stay as the volume and silhouette base. Their material is now a dark matte depth shade, so gaps between strands read as shadowed hair.
+- **Iterations** (`renders/progress/round4_*`):
+  1. strand pass
+  2. near-black colour; matte base
+  3. diagonal routes over the ears (no ridge); fill locks on the upper sides and the top-front of both sides (no scalp gaps in any view)
+  4. clumping, outward flips at the front, and more flyaways
+  5. hairline raised so the brows and forehead show as in the sheet; fuller crown
+- **Real-time engines:** export the mesh locks (or hair cards from them, via the `blender-hair-grooming` skill). Strand curves are for rendering and offline animation.
+
 **08 Rigging.** Baby Mo's Rigify rig is reused and scaled to Ais. It provides pelvis, spine, chest, neck and head; shoulders; arms with IK/FK; hands with all fingers; legs and feet; and the Rigify face rig (brows, lids, eyes, jaw, lips, cheeks, tongue) for facial controls. Skinning:
 - **Body and face:** keep Mo's weights.
 - **Hair:** rigid to `DEF-spine.006` (head).

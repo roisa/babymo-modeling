@@ -35,8 +35,8 @@ def build(mat):
     L(dark.outputs[2], bs.inputs["Base Color"])
     bump = N("ShaderNodeBump"); bump.location = (300, -250); bump.inputs["Strength"].default_value = 0.12; bump.inputs["Distance"].default_value = 0.0004
     L(wave.outputs["Fac"], bump.inputs["Height"]); L(bump.outputs["Normal"], bs.inputs["Normal"])
-    bs.inputs["Roughness"].default_value = 0.3
-    bs.inputs["Specular IOR Level"].default_value = 0.4
+    bs.inputs["Roughness"].default_value = 0.62
+    bs.inputs["Specular IOR Level"].default_value = 0.18
     tan = N("ShaderNodeTangent"); tan.location = (300, -450); tan.direction_type = 'UV_MAP'; tan.uv_map = "UVMap"
     bs.inputs["Anisotropic"].default_value = 0.5
     L(tan.outputs["Tangent"], bs.inputs["Tangent"])
