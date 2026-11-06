@@ -275,10 +275,10 @@ for s_ in (1, -1):
     Q = P[fm]
     lo, hi = Q.min(0), Q.max(0)
     cx, cy = (lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2
-    L2, W2 = (hi[1] - lo[1]) / 2 + 0.008, (hi[0] - lo[0]) / 2 + 0.008
+    L2, W2 = (hi[1] - lo[1]) / 2 + 0.0045, (hi[0] - lo[0]) / 2 + 0.004
     print("foot", s_, "len", round(hi[1] - lo[1], 3), "w", round(hi[0] - lo[0], 3), "top", round(hi[2], 3))
-    sh = superellipsoid(f"Ais_Shoe_{'L' if s_ > 0 else 'R'}", K(cx, cy - 0.002, 0.0255), W2 * k, L2 * k, 0.0215 * k, e=2.8, flat=0.004 * k)
-    so = superellipsoid(f"Ais_Sole_{'L' if s_ > 0 else 'R'}", K(cx, cy - 0.002, 0.0058), (W2 + 0.0034) * k, (L2 + 0.0038) * k, 0.0058 * k, e=3.4)
+    sh = superellipsoid(f"Ais_Shoe_{'L' if s_ > 0 else 'R'}", K(cx, cy - 0.002, 0.0265), W2 * k, L2 * k, 0.0235 * k, e=2.3, flat=0.006 * k)
+    so = superellipsoid(f"Ais_Sole_{'L' if s_ > 0 else 'R'}", K(cx, cy - 0.002, 0.0042), (W2 + 0.0022) * k, (L2 + 0.0026) * k, 0.0042 * k, e=3.0)
     shoe_parts.append(sh); sole_parts.append(so)
 def joined(parts, name, mat):
     ob = parts[0]

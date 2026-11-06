@@ -65,6 +65,18 @@ Body faces fully covered by clothes are hidden with a Mask modifier (vertex grou
 - the clean back view confirmed
 - QA warnings fixed: hair normals, missing UVs on cuffs, pockets and moon, empty UVs on shoes
 
+**07b Refinement round 2 (after review feedback: "looks weird").** Compared again, strictly, against the reference sheet. These changes are scripted into batches 03–06 and the whole chain was rebuilt:
+- **Eyes:** removed Mo's dark lower liner (it ringed the whole eye), leaving a thick upper lash line only, with short, thick, curled flicks at the outer corners. The warm-brown iris and the eye whites now read like the reference.
+- **Skin:** graded to lighter, warmer peach (a `Skin Grade` node in `M_Ais_Skin`, editable), with a slightly stronger pink blush.
+- **Hair:**
+  - the pinstripe strand texture is replaced by fine, subtle strands, with glossier shading
+  - locks are wider and flatter so they overlap into one smooth mass, without ridges
+  - the crown is fuller and rounder
+  - the bob is longer, about 2 cm below the chin like the sheet, and frames the face from the front
+- **Shoes:** smaller, rounder toddler shoes with a thinner light-blue sole.
+
+Before and after sheets: `renders/progress/refine2_*.png`. The final renders, turnaround, animation tests and QA (pass, 0 errors) were regenerated from the rebuilt file.
+
 **08 Rigging.** Baby Mo's Rigify rig is reused and scaled to Ais. It provides pelvis, spine, chest, neck and head; shoulders; arms with IK/FK; hands with all fingers; legs and feet; and the Rigify face rig (brows, lids, eyes, jaw, lips, cheeks, tongue) for facial controls. Skinning:
 - **Body and face:** keep Mo's weights.
 - **Hair:** rigid to `DEF-spine.006` (head).

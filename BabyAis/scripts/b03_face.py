@@ -51,8 +51,16 @@ db[:, 2] -= 0.0012 * np.clip((t - 0.75) / 0.25, 0, 1) * k                      #
 db[:, 1] -= 0.0004 * k                                                         # stays on the skin after lift
 C.apply_world_delta(br, db)
 
-# ---- lash flicks: 3 tapered curved lashes at each outer corner, joined into Ais_Lashes
+# ---- Ais has an upper lash line only (reference): remove Mo's lower liner half of the lash mesh
 la = bpy.data.objects["Ais_Lashes"]
+rig = bpy.data.objects["Ais_Rig"]
+eyez = {s_: (rig.matrix_world @ rig.data.bones[f"ORG-eye.{n}"].head_local).z for s_, n in ((1, "L"), (-1, "R"))}
+bm = bmesh.new(); bm.from_mesh(la.data); M = la.matrix_world
+low = [f for f in bm.faces if (M @ f.calc_center_median()).z < eyez[1 if (M @ f.calc_center_median()).x > 0 else -1] - 0.0005 * k]
+bmesh.ops.delete(bm, geom=low, context="FACES"); bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+bm.to_mesh(la.data); bm.free(); la.data.update()
+print("lower liner faces removed", len(low))
+# ---- lash flicks: 3 tapered curved lashes at each outer corner, joined into Ais_Lashes
 Pl = C.world_coords(la)
 me = la.data
 bm = bmesh.new(); bm.from_mesh(me)
@@ -70,14 +78,14 @@ for sx in (-1, 1):
     picks = [upper[0], upper[min(4, len(upper)-1)], upper[min(9, len(upper)-1)]]
     for j, ai in enumerate(picks):
         base = Vector(Pl[ai])
-        L = (0.0105 - 0.0022 * j) * k
-        out = Vector((sx * 0.75, -0.25, 0.55)).normalized()
-        up = Vector((sx * 0.35, -0.15, 1.0)).normalized()
+        L = (0.0062 - 0.0012 * j) * k
+        out = Vector((sx * 0.9, -0.3, 0.3)).normalized()
+        up = Vector((sx * 0.75, -0.2, 0.75)).normalized()
         rings = []
         for s in range(7):
             u = s / 6
             c = base + (out * (1 - u) + up * u).normalized() * (L * u) + out * (L * 0.35 * u)
-            r = (0.00145 * (1 - u) ** 0.8 + 0.00012) * k
+            r = (0.0019 * (1 - u) ** 0.7 + 0.00015) * k
             ring = []
             for q in range(5):
                 a = 2 * math.pi * q / 5

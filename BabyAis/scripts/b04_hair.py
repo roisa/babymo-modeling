@@ -86,7 +86,7 @@ def vol(d, o):
     """Cohesive dome: volume grows from the part/crown to the widest point just above the ears.
     The waypoint offset only matters at the root (o < .006 -> root lift); LAYER_D separates layers."""
     th = math.degrees(math.acos(max(-1, min(1, d.z))))
-    v = 0.005 + 0.011 * min(max((th - 8) / 62, 0), 1) ** 0.8 + 0.006 * min(max((th - 55) / 35, 0), 1)
+    v = 0.008 + 0.010 * min(max((th - 5) / 55, 0), 1) ** 0.7 + 0.006 * min(max((th - 55) / 35, 0), 1)
     v *= 1 - 0.5 * max(0.0, -d.y - 0.35) / 0.65      # flatter at the forehead hairline
     if o < 0.0045: v = min(v, 0.0035)    # roots at the part sit close to the scalp
     return v + LAYER_D
@@ -120,30 +120,30 @@ for i in range(17):
     a = -68 + 136 * i / 16
     wp = [S(a * 0.3, 18, 0.002), S(a * 0.8, 55, 0.008), S(a, 92, 0.011)]
     p = scalp_path(wp)
-    add_lock(f"BackInner_{i:02d}", p + hang(p[-1], 0.345 + random.uniform(0, 0.004), -0.004, 0.010, 0.005), 0.044, 0.011, "back_in")
+    add_lock(f"BackInner_{i:02d}", p + hang(p[-1], 0.326 + random.uniform(0, 0.004), -0.004, 0.012, 0.006), 0.052, 0.010, "back_in")
 # ---------------- 2b back bob: outer locks
 LAYER_D = 0.0
 for i in range(21):
     a = -72 + 144 * i / 20 + random.uniform(-1.5, 1.5)
     wp = [S(a * 0.35, 14, 0.004), S(a * 0.8, 52, 0.014), S(a, 92, 0.017)]
     p = scalp_path(wp)
-    zend = 0.338 + random.uniform(-0.003, 0.003) + 0.004 * (abs(a) / 72)
-    add_lock(f"BackOuter_{i:02d}", p + hang(p[-1], zend, -0.002, 0.013, 0.007), 0.034 + random.uniform(-0.003, 0.003), 0.009, "back_out")
+    zend = 0.320 + random.uniform(-0.002, 0.002) + 0.004 * (abs(a) / 72)
+    add_lock(f"BackOuter_{i:02d}", p + hang(p[-1], zend, -0.002, 0.015, 0.008), 0.044 + random.uniform(-0.003, 0.003), 0.0075, "back_out")
 LAYER_D = 0.0012
 # ---------------- 3 side sections: from the part, over the top of the ear, tucked behind it
 def side_lock(name, sgn, phi, a_mid, t_mid, a_land, t_land, zend, w=0.034, off=0.016):
     wp = [(part_dir(phi), 0.003), S(sgn * a_mid, t_mid, off * 0.85), S(sgn * a_land, t_land, off),
           S(sgn * 82, 90, off), S(sgn * 58, 93, off)]
     p = scalp_path(wp)
-    add_lock(name, p + hang(p[-1], zend, -0.002, 0.012, 0.006), w, 0.0095, "side")
+    add_lock(name, p + hang(p[-1], zend, -0.002, 0.014, 0.007), w, 0.008, "side")
 # her left (long side of the part)
 L = [(-26, 70, 40, 80, 82), (-14, 86, 46, 88, 84), (-2, 98, 50, 96, 84), (10, 108, 54, 104, 83), (22, 118, 57, 110, 82)]
 for j, (phi, am, tm, al, tl) in enumerate(L):
-    side_lock(f"SideL_{j}", 1, phi, am, tm, al, tl, 0.343 + 0.002 * j)
+    side_lock(f"SideL_{j}", 1, phi, am, tm, al, tl, 0.322 + 0.002 * j, w=0.042)
 # her right (short side)
 R = [(-26, 68, 40, 80, 83), (-14, 80, 44, 88, 85), (-2, 90, 47, 94, 85), (10, 100, 50, 100, 84), (22, 108, 53, 104, 83)]
 for j, (phi, am, tm, al, tl) in enumerate(R):
-    side_lock(f"SideR_{j}", -1, phi, am, tm, al, tl, 0.343 + 0.002 * j)
+    side_lock(f"SideR_{j}", -1, phi, am, tm, al, tl, 0.322 + 0.002 * j, w=0.042)
 LAYER_D = 0.0022
 # ---------------- 4 side-swept fringe: from the front of the part across the upper forehead
 F = [  # phi, (a,t) waypoints across the forehead -> temple, end tucked behind the left ear
@@ -155,13 +155,13 @@ F = [  # phi, (a,t) waypoints across the forehead -> temple, end tucked behind t
 for j, (phi, w8, w) in enumerate(F):
     wp = [(part_dir(phi), 0.003)] + [S(a, t, 0.010 + 0.002 * q) for q, (a, t) in enumerate(w8)] + [S(84, 90, 0.016), S(58, 93, 0.016)]
     p = scalp_path(wp)
-    add_lock(f"Fringe_{j}", p + hang(p[-1], 0.348 + 0.003 * j, -0.002, 0.012, 0.006), w, 0.0085, "fringe")
+    add_lock(f"Fringe_{j}", p + hang(p[-1], 0.326 + 0.003 * j, -0.002, 0.014, 0.007), w * 1.2, 0.0075, "fringe")
 # right side front: short sweep from the part down to the right temple
 FR = [(40, [(-172, 54), (-148, 70), (-124, 82)], 0.032), (52, [(-180, 60), (-160, 72), (-130, 83)], 0.028)]
 for j, (phi, w8, w) in enumerate(FR):
     wp = [(part_dir(phi), 0.003)] + [S(a, t, 0.010 + 0.002 * q) for q, (a, t) in enumerate(w8)] + [S(-84, 90, 0.016), S(-58, 93, 0.016)]
     p = scalp_path(wp)
-    add_lock(f"FringeR_{j}", p + hang(p[-1], 0.348 + 0.003 * j, -0.002, 0.012, 0.006), w, 0.0085, "fringe")
+    add_lock(f"FringeR_{j}", p + hang(p[-1], 0.326 + 0.003 * j, -0.002, 0.014, 0.007), w * 1.2, 0.0075, "fringe")
 LAYER_D = -0.004
 # ---------------- 5 face-framing temple locks in front of the ears (short, inward curl)
 for sgn, phi, w in ():   # face-frame locks removed (read as hooks); side mass frames the face

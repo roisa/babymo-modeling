@@ -9,17 +9,19 @@ def build(mat):
     uv = N("ShaderNodeTexCoord"); uv.location = (-1000, 0)
     sep = N("ShaderNodeSeparateXYZ"); sep.location = (-800, -200); L(uv.outputs["UV"], sep.inputs[0])
     # strands: fine bands across each lock (u), slightly wavy along its length (v)
-    wave = N("ShaderNodeTexWave"); wave.location = (-600, 200); wave.wave_type = 'BANDS'; wave.bands_direction = 'X'
-    wave.inputs["Scale"].default_value = 5.0; wave.inputs["Distortion"].default_value = 3.0
-    wave.inputs["Detail"].default_value = 3.0; wave.inputs["Detail Scale"].default_value = 1.5
-    L(uv.outputs["UV"], wave.inputs["Vector"])
+    # fine strands: noise stretched along the lock (u across x40, v along x1.5) -> soft hair lines, not stripes
+    stretch = N("ShaderNodeMapping"); stretch.location = (-800, 200); stretch.inputs["Scale"].default_value = (40.0, 1.5, 1.0)
+    L(uv.outputs["UV"], stretch.inputs["Vector"])
+    wave = N("ShaderNodeTexNoise"); wave.location = (-600, 200); wave.inputs["Scale"].default_value = 3.0
+    wave.inputs["Detail"].default_value = 4.0; wave.inputs["Roughness"].default_value = 0.6
+    L(stretch.outputs["Vector"], wave.inputs["Vector"])
     noise = N("ShaderNodeTexNoise"); noise.location = (-600, -50); noise.inputs["Scale"].default_value = 18.0
     L(uv.outputs["UV"], noise.inputs["Vector"])
     # colour: chocolate-black base, warm brown streaks, darker roots
     ramp = N("ShaderNodeValToRGB"); ramp.location = (-350, 250)
     e = ramp.color_ramp.elements; e[0].position = 0.25; e[0].color = (0.0035, 0.0023, 0.0019, 1); e[1].position = 0.9; e[1].color = (0.013, 0.0075, 0.005, 1)
     mixf = N("ShaderNodeMath"); mixf.operation = 'MULTIPLY'; mixf.location = (-450, 250)
-    L(wave.outputs["Color"], mixf.inputs[0]); L(noise.outputs["Fac"], mixf.inputs[1]); mixf.inputs[1].default_value = 1
+    L(wave.outputs["Fac"], mixf.inputs[0]); L(noise.outputs["Fac"], mixf.inputs[1]); mixf.inputs[1].default_value = 1
     add = N("ShaderNodeMath"); add.operation = 'ADD'; add.location = (-450, 380); add.use_clamp = True
     L(mixf.outputs[0], add.inputs[0]); add.inputs[1].default_value = 0.15
     L(add.outputs[0], ramp.inputs["Fac"])
@@ -31,10 +33,10 @@ def build(mat):
     for i in range(3): L(root.outputs[0], comb.inputs[i])
     L(comb.outputs[0], dark.inputs[7])
     L(dark.outputs[2], bs.inputs["Base Color"])
-    bump = N("ShaderNodeBump"); bump.location = (300, -250); bump.inputs["Strength"].default_value = 0.2; bump.inputs["Distance"].default_value = 0.0004
+    bump = N("ShaderNodeBump"); bump.location = (300, -250); bump.inputs["Strength"].default_value = 0.12; bump.inputs["Distance"].default_value = 0.0004
     L(wave.outputs["Fac"], bump.inputs["Height"]); L(bump.outputs["Normal"], bs.inputs["Normal"])
-    bs.inputs["Roughness"].default_value = 0.4
-    bs.inputs["Specular IOR Level"].default_value = 0.3
+    bs.inputs["Roughness"].default_value = 0.3
+    bs.inputs["Specular IOR Level"].default_value = 0.4
     tan = N("ShaderNodeTangent"); tan.location = (300, -450); tan.direction_type = 'UV_MAP'; tan.uv_map = "UVMap"
     bs.inputs["Anisotropic"].default_value = 0.5
     L(tan.outputs["Tangent"], bs.inputs["Tangent"])

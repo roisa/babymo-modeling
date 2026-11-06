@@ -13,8 +13,18 @@ img.pack()
 e = bpy.data.materials["M_Ais_Eye"]; bs = next(n for n in e.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
 bs.inputs["Coat Weight"].default_value = 0.0; bs.inputs["Roughness"].default_value = 0.35
 bs.inputs["Specular IOR Level"].default_value = 0.35
+# lighter, warmer peach skin like the reference (texture kept, graded in the shader)
+nt = m.node_tree; bs = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+hsv = nt.nodes.new("ShaderNodeHueSaturation"); hsv.name = "Skin Grade"; hsv.location = (-350, 300)
+hsv.inputs["Hue"].default_value = 0.505; hsv.inputs["Saturation"].default_value = 0.82; hsv.inputs["Value"].default_value = 1.22
+tex.location = (-650, 300)
+targets = [l.to_socket for l in nt.links if l.from_node == tex and l.from_socket.name == "Color" and l.to_node.name == "Blush Mix"]
+for l in [l for l in nt.links if l.from_node == tex and l.to_node.name == "Blush Mix"]: nt.links.remove(l)
+nt.links.new(tex.outputs["Color"], hsv.inputs["Color"])
+for sock in targets: nt.links.new(hsv.outputs["Color"], sock)
+print("skin graded", len(targets))
 # blush: softer & a touch more saturated rose, reads like the reference
-m.node_tree.nodes["Blush Strength"].inputs[1].default_value = 0.78
+m.node_tree.nodes["Blush Strength"].inputs[1].default_value = 0.92
 bpy.ops.wm.save_mainfile(compress=True)
 bpy.ops.wm.save_as_mainfile(filepath=root + "/checkpoints/BabyAis_v003_face.blend", compress=True, copy=True)
 print("SAVED v003")
