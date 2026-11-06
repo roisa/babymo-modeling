@@ -159,7 +159,7 @@ def mat(name, rgb, rough=0.75, sheen=0.5):
 M_pink = mat("M_Ais_Fabric_Pink", (1.0, 0.07, 0.30))
 M_lav = mat("M_Ais_Fabric_Lavender", (0.42, 0.24, 0.95))
 M_blue = mat("M_Ais_Fabric_LightBlue", (0.30, 0.66, 1.0))
-M_purp = mat("M_Ais_Pocket_Purple", (0.36, 0.17, 0.88))
+M_purp = mat("M_Ais_Pocket_Purple", (0.40, 0.22, 0.95))
 M_shoe = mat("M_Ais_Shoe_Purple", (0.36, 0.18, 0.9), rough=0.45, sheen=0.2)
 M_sole = mat("M_Ais_Shoe_Sole_Blue", (0.33, 0.68, 1.0), rough=0.5, sheen=0.1)
 M_moon = mat("M_Ais_Moon_White", (0.92, 0.92, 0.92), rough=0.6, sheen=0.3)
@@ -171,7 +171,7 @@ for s_ in (1, -1):
     wp, wd, sp, sd = WR[s_]
     cuts_shirt.append((wp + wd * 0.001 * k, wd))
     cuts_romper.append((sp - V(s_, 0, 0) * 0.006 * k, V(s_, 0, 0.28).normalized()))
-shirt_ob = shell("Ais_Shirt", shirt, 0.0035, M_lav, cuts_shirt)
+shirt_ob = shell("Ais_Shirt", shirt, 0.0046, M_lav, cuts_shirt)
 # hidden shirt torso under the romper is removed (no layer poke-through in motion); keep sleeves + collar
 bm = bmesh.new(); bm.from_mesh(shirt_ob.data)
 def under_romper(co):
@@ -196,8 +196,37 @@ def planar_uv(ob, axes=(0, 2)):
 def fix_normals(ob):
     bm_ = bmesh.new(); bm_.from_mesh(ob.data); bmesh.ops.recalc_face_normals(bm_, faces=bm_.faces); bm_.to_mesh(ob.data); bm_.free()
 romper_ob = shell("Ais_Romper", romper, 0.0078, M_pink, cuts_romper)
+def romper_shape(ob):
+    """Toddler romper silhouette: no body detail (seat crease, knees), straight rounded pant legs."""
+    bm = bmesh.new(); bm.from_mesh(ob.data); bm.verts.ensure_lookup_table()
+    bnd = {v for e in bm.edges if e.is_boundary for v in e.verts}
+    low = [v for v in bm.verts if v.co.z / k < 0.215 and v not in bnd]
+    for _ in range(14):
+        bmesh.ops.smooth_vert(bm, verts=low, factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=False)
+    # legs: radius around each leg axis at least Rmin (wide straight trousers)
+    for s_, n in ((1, "L"), (-1, "R")):
+        hp = rig.matrix_world @ rig.data.bones[f"DEF-thigh.{n}"].head_local
+        ap = rig.matrix_world @ rig.data.bones[f"DEF-shin.{n}.001"].tail_local
+        ax = (ap - hp).normalized()
+        for v in bm.verts:
+            if v.co.x * s_ <= 0 or v.co.z / k > 0.15: continue
+            t = (v.co - hp).dot(ax); c = hp + ax * t; r = v.co - c; r.z = 0
+            if r.length < 1e-6: continue
+            # top of the leg blends into the body; full straight leg below z .13
+            blend = min(max((0.15 - v.co.z / k) / 0.03, 0), 1)
+            Rmin = (0.042 - 0.003 * min(max((0.13 - v.co.z / k) / 0.08, 0), 1)) * k
+            inner = r.normalized().x * s_ < -0.3          # inner side: limited so legs never touch
+            if inner: Rmin = min(Rmin, 0.043 * k)
+            if r.length < Rmin:
+                v.co += r.normalized() * (Rmin - r.length) * blend
+    # guard: >= 6 mm outside the skin everywhere
+    for v in bm.verts:
+        loc, nrm, _i, dist = BODY_BVH.find_nearest(v.co)
+        if loc is not None and (v.co - loc).dot(nrm) < 0.006 * k: v.co = loc + nrm * 0.006 * k
+    bm.to_mesh(ob.data); bm.free()
+romper_shape(romper_ob)
 cuff_parts = []
-def cuff_band(name, wp, wd, length=0.017, off=0.0062, segs=24, rows=7):
+def cuff_band(name, wp, wd, length=0.018, off=0.0072, segs=24, rows=7):
     """Neat cuff band around the wrist axis: radius = measured sleeve radius + ease, per angle."""
     up = Vector((0, 0, 1)); a1 = wd.cross(up).normalized(); a2 = wd.cross(a1).normalized()
     bm = bmesh.new(); grid = []
@@ -321,6 +350,10 @@ def patch(name, outline2d, center, matx, lift=0.0030, thick=0.0018, grid=14):
     for p in m.polygons: p.use_smooth = True
     print(name, "faces", faces)
     return ob, thick
+def u_pocket(u, v):
+    """Straight top edge, rounded U bottom (reference pockets)."""
+    if v > 0.0: return abs(u) <= 1.0 and v <= 1.0
+    return (u * u) / 1.0 + (v * v) / 1.0 <= 1.0 or (abs(u) <= 1.0 and (abs(u) - 0.45) ** 2 + v * v <= 0.55 ** 2 and abs(u) > 0.45) or (abs(u) <= 0.45 and v >= -1.0)
 def rounded_rect(r=0.35):
     def f(u, v):
         top = v > 0.75 and abs(u) < 1.0           # straight top edge
@@ -329,11 +362,11 @@ def rounded_rect(r=0.35):
     return f
 pockets = []
 for s in (-1, 1):
-    ob, t = patch(f"Ais_Pocket_{'L' if s > 0 else 'R'}", rounded_rect(0.45), (s * 0.043, 0.163, 0.022, 0.019), M_purp, grid=16)
+    ob, t = patch(f"Ais_Pocket_{'L' if s > 0 else 'R'}", u_pocket, (s * 0.044, 0.158, 0.025, 0.023), M_purp, grid=20)
     pockets.append((ob, t))
 def crescent(u, v):
     return (u * u + v * v) <= 1.0 and ((u - 0.42) ** 2 + (v + 0.12) ** 2) > 0.78 ** 2
-moon, mt = patch("Ais_MoonEmblem", crescent, (0.0, 0.268, 0.025, 0.025), M_moon, grid=28)
+moon, mt = patch("Ais_MoonEmblem", crescent, (0.0, 0.262, 0.030, 0.030), M_moon, grid=28)
 rbm.free()
 # pockets: join into one object (two separate islands), moon separate
 pk = pockets[0][0]

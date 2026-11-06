@@ -7,7 +7,7 @@ root = sys.argv[1]; LOOK = sys.argv[2] if len(sys.argv) > 4 else "None"
 import os; SOFT = float(os.environ.get("SOFT", "0.25")); SUNA = float(os.environ.get("SUNA", "2"))
 bpy.ops.wm.open_mainfile(filepath=root + "/checkpoints/BabyAis_v005_clothing.blend")
 sc = bpy.context.scene
-def fabric(name, rgb, rough=0.78, sheen=0.55, grain=0.06, coat=0.0, crough=0.3):
+def fabric(name, rgb, rough=0.62, sheen=0.35, grain=0.015, coat=0.0, crough=0.3):
     m = bpy.data.materials[name]; nt = m.node_tree; nt.nodes.clear(); N = nt.nodes.new; L = nt.links.new
     out = N("ShaderNodeOutputMaterial"); out.location = (600, 0)
     bs = N("ShaderNodeBsdfPrincipled"); bs.location = (300, 0)
@@ -22,14 +22,14 @@ def fabric(name, rgb, rough=0.78, sheen=0.55, grain=0.06, coat=0.0, crough=0.3):
     L(tc.outputs["Object"], vb.inputs["Vector"])
     # very subtle large-scale value breakup so flat fabric doesn't look plastic
     mix = N("ShaderNodeMix"); mix.data_type = 'RGBA'; mix.blend_type = 'MULTIPLY'; mix.location = (0, 200)
-    mix.inputs[0].default_value = 0.08; mix.inputs[6].default_value = (*rgb, 1); L(vb.outputs["Color"], mix.inputs[7])
+    mix.inputs[0].default_value = 0.0; mix.inputs[6].default_value = (*rgb, 1); L(vb.outputs["Color"], mix.inputs[7])
     L(mix.outputs[2], bs.inputs["Base Color"])
     bu = N("ShaderNodeBump"); bu.location = (0, -200); bu.inputs["Strength"].default_value = grain; L(no.outputs["Fac"], bu.inputs["Height"])
     L(bu.outputs["Normal"], bs.inputs["Normal"]); L(bs.outputs[0], out.inputs["Surface"])
-fabric("M_Ais_Fabric_Pink", (1.0, 0.075, 0.30))
+fabric("M_Ais_Fabric_Pink", (1.0, 0.06, 0.40))
 fabric("M_Ais_Fabric_Lavender", (0.40, 0.22, 0.95))
 fabric("M_Ais_Fabric_LightBlue", (0.28, 0.64, 1.0))
-fabric("M_Ais_Pocket_Purple", (0.33, 0.14, 0.86))
+fabric("M_Ais_Pocket_Purple", (0.40, 0.21, 0.95))
 fabric("M_Ais_Moon_White", (0.93, 0.93, 0.92), rough=0.7, sheen=0.4)
 fabric("M_Ais_Shoe_Purple", (0.33, 0.15, 0.88), rough=0.42, sheen=0.15, grain=0.02, coat=0.25, crough=0.25)
 fabric("M_Ais_Shoe_Sole_Blue", (0.30, 0.66, 1.0), rough=0.5, sheen=0.1, grain=0.02)

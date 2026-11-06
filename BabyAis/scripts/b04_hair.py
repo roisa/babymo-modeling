@@ -49,7 +49,9 @@ def skull(d):
     return (hit[0] - Cc).length if hit[0] else 0.12
 
 XP = -0.017
-FLARE_ADD = 0.006                                    # part line x (her right of centre, as in the reference)
+FLARE_ADD = 0.0
+WAVE_PH = 0.0
+BULGE = 0.011                                    # part line x (her right of centre, as in the reference)
 def part_dir(phi):
     """phi: +58 front hairline ... -30 crown (deg, in the y-z plane)."""
     ph = math.radians(phi)
@@ -86,14 +88,14 @@ def vol(d, o):
     """Cohesive dome: volume grows from the part/crown to the widest point just above the ears.
     The waypoint offset only matters at the root (o < .006 -> root lift); LAYER_D separates layers."""
     th = math.degrees(math.acos(max(-1, min(1, d.z))))
-    v = 0.008 + 0.010 * min(max((th - 5) / 55, 0), 1) ** 0.7 + 0.006 * min(max((th - 55) / 35, 0), 1)
-    v *= 1 - 0.5 * max(0.0, -d.y - 0.35) / 0.65      # flatter at the forehead hairline
+    v = 0.011 + 0.011 * min(max((th - 5) / 55, 0), 1) ** 0.7 + 0.006 * min(max((th - 55) / 35, 0), 1)
+    v *= 1 - 0.85 * max(0.0, -d.y - 0.25) / 0.75      # flatter at the forehead hairline
     if o < 0.0045: v = min(v, 0.0035)    # roots at the part sit close to the scalp
     return v + LAYER_D
 
 def hang(p0, z_end, flare=0.006, tuck=0.012, curl=0.006):
     side = min(abs(math.degrees(math.atan2(p0.x - Cc.x, p0.y - Cc.y))) / 72, 1.2)
-    flare = flare + FLARE_ADD + 0.017 * side ** 2; tuck = tuck + 0.004 + 0.004 * side
+    flare = flare + FLARE_ADD + 0.010 * side ** 2; tuck = tuck + 0.001 * side
     """Bob drop from p0 straight down to z_end with a slight outward flare then an inward curl."""
     h = Vector((p0.x - Cc.x, p0.y - Cc.y, 0)); R0 = h.length; h.normalize()
     pts = []; n = 10
@@ -102,6 +104,7 @@ def hang(p0, z_end, flare=0.006, tuck=0.012, curl=0.006):
         z = p0.z + (z_end - p0.z) * s
         peak = 0.62 - 0.27 * min(side, 1)
         R = R0 + flare * math.sin(min(s / peak, 1) * math.pi / 2)
+        R += BULGE * math.sin(math.pi * min(s / 0.92, 1.0)) + 0.0018 * math.sin(s * math.pi * 1.6 + WAVE_PH)
         if s > 0.72:
             q = (s - 0.72) / 0.28
             R -= tuck * q * q
@@ -110,7 +113,7 @@ def hang(p0, z_end, flare=0.006, tuck=0.012, curl=0.006):
     return pts
 
 locks = []   # (name, centreline pts (Mo space), width, thickness, layer)
-def add_lock(name, pts, w, t, layer, tipw=0.45):
+def add_lock(name, pts, w, t, layer, tipw=0.16):
     locks.append((name, pts, w, t, layer, tipw))
 
 S = lambda a, t, o: (sph(a, t), o)
@@ -120,48 +123,49 @@ for i in range(17):
     a = -68 + 136 * i / 16
     wp = [S(a * 0.3, 18, 0.002), S(a * 0.8, 55, 0.008), S(a, 92, 0.011)]
     p = scalp_path(wp)
-    add_lock(f"BackInner_{i:02d}", p + hang(p[-1], 0.326 + random.uniform(0, 0.004), -0.004, 0.012, 0.006), 0.052, 0.010, "back_in")
+    WAVE_PH = random.uniform(0, 1.0)
+    add_lock(f"BackInner_{i:02d}", p + hang(p[-1], 0.300 + random.uniform(0, 0.006), 0.010, 0.006, 0.004), 0.050, 0.010, "back_in", tipw=0.3)
 # ---------------- 2b back bob: outer locks
 LAYER_D = 0.0
-for i in range(21):
-    a = -72 + 144 * i / 20 + random.uniform(-1.5, 1.5)
+for i in range(23):
+    a = -74 + 148 * i / 22 + random.uniform(-1.5, 1.5)
     wp = [S(a * 0.35, 14, 0.004), S(a * 0.8, 52, 0.014), S(a, 92, 0.017)]
     p = scalp_path(wp)
-    zend = 0.320 + random.uniform(-0.002, 0.002) + 0.004 * (abs(a) / 72)
-    add_lock(f"BackOuter_{i:02d}", p + hang(p[-1], zend, -0.002, 0.015, 0.008), 0.044 + random.uniform(-0.003, 0.003), 0.0075, "back_out")
+    zend = 0.294 + random.uniform(-0.007, 0.007) + 0.004 * (abs(a) / 74); WAVE_PH = random.uniform(0, 1.2)
+    add_lock(f"BackOuter_{i:02d}", p + hang(p[-1], zend, 0.004, random.uniform(0.003, 0.009), random.uniform(0.002, 0.006)), 0.044 + random.uniform(-0.004, 0.004), 0.0078, "back_out", tipw=0.34)
+# ---------------- 2c top layer: shorter crown layer over the bob (visible layering like the reference)
+LAYER_D = 0.0018
+for i in range(15):
+    a = -66 + 132 * i / 14 + random.uniform(-2, 2)
+    wp = [S(a * 0.3, 12, 0.004), S(a * 0.8, 50, 0.014), S(a, 92, 0.017)]
+    p = scalp_path(wp); WAVE_PH = random.uniform(0, 1.0)
+    add_lock(f"TopLayer_{i:02d}", p + hang(p[-1], 0.318 + random.uniform(-0.006, 0.006), 0.004, 0.004, 0.004), 0.044 + random.uniform(-0.004, 0.004), 0.007, "layer", tipw=0.28)
+LAYER_D = 0.0
 LAYER_D = 0.0012
 # ---------------- 3 side sections: from the part, over the top of the ear, tucked behind it
 def side_lock(name, sgn, phi, a_mid, t_mid, a_land, t_land, zend, w=0.034, off=0.016):
     wp = [(part_dir(phi), 0.003), S(sgn * a_mid, t_mid, off * 0.85), S(sgn * a_land, t_land, off),
           S(sgn * 82, 90, off), S(sgn * 58, 93, off)]
     p = scalp_path(wp)
-    add_lock(name, p + hang(p[-1], zend, -0.002, 0.014, 0.007), w, 0.008, "side")
+    add_lock(name, p + hang(p[-1], zend + random.uniform(-0.005, 0.005), 0.003, random.uniform(0.0, 0.006), 0.004), w, 0.008, "side", tipw=0.32)
 # her left (long side of the part)
 L = [(-26, 70, 40, 80, 82), (-14, 86, 46, 88, 84), (-2, 98, 50, 96, 84), (10, 108, 54, 104, 83), (22, 118, 57, 110, 82)]
 for j, (phi, am, tm, al, tl) in enumerate(L):
-    side_lock(f"SideL_{j}", 1, phi, am, tm, al, tl, 0.322 + 0.002 * j, w=0.042)
+    side_lock(f"SideL_{j}", 1, phi, am, tm, al, tl, 0.298 + 0.002 * j, w=0.040)
 # her right (short side)
 R = [(-26, 68, 40, 80, 83), (-14, 80, 44, 88, 85), (-2, 90, 47, 94, 85), (10, 100, 50, 100, 84), (22, 108, 53, 104, 83)]
 for j, (phi, am, tm, al, tl) in enumerate(R):
-    side_lock(f"SideR_{j}", -1, phi, am, tm, al, tl, 0.322 + 0.002 * j, w=0.042)
-LAYER_D = 0.0022
+    side_lock(f"SideR_{j}", -1, phi, am, tm, al, tl, 0.298 + 0.002 * j, w=0.040)
+LAYER_D = 0.0008
 # ---------------- 4 side-swept fringe: from the front of the part across the upper forehead
-F = [  # phi, (a,t) waypoints across the forehead -> temple, end tucked behind the left ear
-    (30, [(146, 48), (124, 64), (110, 81)], 0.038),
-    (40, [(158, 54), (134, 68), (116, 82)], 0.036),
-    (49, [(170, 59), (146, 71), (122, 82)], 0.033),
-    (57, [(184, 63), (162, 71), (136, 78), (118, 84)], 0.029),
-]
-for j, (phi, w8, w) in enumerate(F):
-    wp = [(part_dir(phi), 0.003)] + [S(a, t, 0.010 + 0.002 * q) for q, (a, t) in enumerate(w8)] + [S(84, 90, 0.016), S(58, 93, 0.016)]
-    p = scalp_path(wp)
-    add_lock(f"Fringe_{j}", p + hang(p[-1], 0.326 + 0.003 * j, -0.002, 0.014, 0.007), w * 1.2, 0.0075, "fringe")
-# right side front: short sweep from the part down to the right temple
-FR = [(40, [(-172, 54), (-148, 70), (-124, 82)], 0.032), (52, [(-180, 60), (-160, 72), (-130, 83)], 0.028)]
-for j, (phi, w8, w) in enumerate(FR):
-    wp = [(part_dir(phi), 0.003)] + [S(a, t, 0.010 + 0.002 * q) for q, (a, t) in enumerate(w8)] + [S(-84, 90, 0.016), S(-58, 93, 0.016)]
-    p = scalp_path(wp)
-    add_lock(f"FringeR_{j}", p + hang(p[-1], 0.326 + 0.003 * j, -0.002, 0.014, 0.007), w * 1.2, 0.0075, "fringe")
+# locks from the front of the part that fall down each side of the forehead (reference: forehead framed in an arch)
+FL = [(34, 158, 64, 132, 78, 0.040), (44, 166, 67, 138, 80, 0.036), (54, 174, 68, 144, 81, 0.032)]    # her left (long side)
+FRt = [(30, -158, 62, -130, 78, 0.040), (40, -170, 66, -142, 80, 0.034), (52, -176, 68, -148, 81, 0.030)]                              # her right
+for j, (phi, a1, t1, a2, t2, w) in enumerate(FL + FRt):
+    sgn = 1 if j < len(FL) else -1
+    wp = [(part_dir(phi), 0.003), S(a1, t1, 0.008), S(a2, t2, 0.010), S(sgn * 118, 86, 0.013), S(sgn * 86, 92, 0.016), S(sgn * 58, 93, 0.016)]
+    p = scalp_path(wp); WAVE_PH = random.uniform(0, 1.0)
+    add_lock(f"Fringe_{j}", p + hang(p[-1], 0.300 + 0.004 * j, 0.003, 0.004, 0.004), w * 1.1, 0.0055, "fringe", tipw=0.3)
 LAYER_D = -0.004
 # ---------------- 5 face-framing temple locks in front of the ears (short, inward curl)
 for sgn, phi, w in ():   # face-frame locks removed (read as hooks); side mass frames the face
@@ -232,7 +236,7 @@ for name, pts, w, t, layer, tipw in locks:
     groups.setdefault(layer, []).append((name, pts, w, t, tipw))
 objs = []
 LAYER_NAME = {"back_in": "Ais_Hair_BackInner", "back_out": "Ais_Hair_BackOuter", "side": "Ais_Hair_Sides",
-              "fringe": "Ais_Hair_Fringe", "frame": "Ais_Hair_FaceFrame"}
+              "fringe": "Ais_Hair_Fringe", "layer": "Ais_Hair_TopLayer", "frame": "Ais_Hair_FaceFrame"}
 for layer, items in groups.items():
     bm_all = bmesh.new()
     me_l = bpy.data.meshes.new(LAYER_NAME[layer])

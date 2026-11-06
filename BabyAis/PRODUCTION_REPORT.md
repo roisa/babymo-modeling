@@ -55,7 +55,7 @@ Each lock is a tapered lens-section ribbon with UVs. A clearance pass keeps ever
 
 Body faces fully covered by clothes are hidden with a Mask modifier (vertex group `Hidden_Clothes`), keeping one ring at every opening.
 
-**06 Materials and lighting.** Soft cotton fabrics (sheen, fine grain bump, subtle value breakup), satin shoes, gentle subsurface on the skin, and the hair look-dev. Baby Mo's own light rig is reused unchanged. The world is high-key white, with a shadow-catcher floor. View transform is AgX (as in Mo's file) at −0.4 exposure, which keeps the pink saturated.
+**06 Materials and lighting.** Soft cotton fabrics (sheen, fine grain bump, subtle value breakup), satin shoes, gentle subsurface on the skin, and the hair look-dev. Baby Mo's own light rig is reused unchanged. The world is high-key white, with a shadow-catcher floor. View transform is AgX (as in Mo's file) at −0.4 exposure. Round 3 switches the look to Punchy.
 
 **07 Refinement.** Reviewed every view against the reference and re-ran the whole scripted chain several times:
 - back silhouette slimmed so the dome flows into the bob with inward-curving ends
@@ -76,6 +76,25 @@ Body faces fully covered by clothes are hidden with a Mask modifier (vertex grou
 - **Shoes:** smaller, rounder toddler shoes with a thinner light-blue sole.
 
 Before and after sheets: `renders/progress/refine2_*.png`. The final renders, turnaround, animation tests and QA (pass, 0 errors) were regenerated from the rebuilt file.
+
+**07c Round 3: new hairstyle and refined clothes** (from the second reference sheet, `reference/BabyAis_reference_v2.png`).
+
+*Hair.* The bob is redesigned as a longer, layered, softly voluminous cut to shoulder level:
+- the crown is fuller and rounder
+- a gentle outward curve runs through the length, with a soft S-wave in each lock
+- tips are feathered and tapered, with varied lengths, instead of blunt
+- a new shorter **top layer** (`Ais_Hair_TopLayer`) sits over the long back layer to give visible layering
+- locks from the part fall down each side of the forehead and frame it in an arch, like the sheet, replacing the side-swept band
+- ears stay visible in front of the hair
+
+*Clothes.*
+- The romper is smoothed from the hips down: no seat crease or knee bumps.
+- Its legs are inflated into straight, rounded toddler trousers, with a guard keeping the fabric at least 6 mm outside the skin.
+- The blotchy fabric breakup pattern is removed, leaving a clean, smooth fabric with a light sheen.
+- The pink moves toward the sheet's hot magenta-pink.
+- Pockets are bigger, U-shaped (straight top, round bottom) and lavender.
+- The moon is bigger, the sleeves and cuffs a little puffier.
+- The colour look changes to **AgX – Punchy** (exposure −0.4) for the saturated reference palette.
 
 **08 Rigging.** Baby Mo's Rigify rig is reused and scaled to Ais. It provides pelvis, spine, chest, neck and head; shoulders; arms with IK/FK; hands with all fingers; legs and feet; and the Rigify face rig (brows, lids, eyes, jaw, lips, cheeks, tongue) for facial controls. Skinning:
 - **Body and face:** keep Mo's weights.
@@ -130,7 +149,7 @@ $PY scripts/b02_body.py $R $S
 $PY scripts/b03_face.py $R $S && $PY scripts/b03b_face_shading.py $R $S && $PY scripts/b03c_skin_tex.py $R $S
 $PY scripts/b04_hair.py $R $S
 $PY scripts/b05_clothing.py $R $S
-$PY scripts/b06_materials.py $R None x $S
+$PY scripts/b06_materials.py $R "AgX - Punchy" x $S
 SAVE=1 $PY scripts/b09_animtest.py $R checkpoints/BabyAis_v006_materials.blend anim_tests $S
 cp BabyAis_Working.blend checkpoints/BabyAis_v007_rigging.blend
 SAVE=BabyAis_Final.blend $PY scripts/b10_present.py $R BabyAis_Working.blend final $S
