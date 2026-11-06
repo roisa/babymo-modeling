@@ -109,6 +109,23 @@ Before and after sheets: `renders/progress/refine2_*.png`. The final renders, tu
   5. hairline raised so the brows and forehead show as in the sheet; fuller crown
 - **Real-time engines:** export the mesh locks (or hair cards from them, via the `blender-hair-grooming` skill). Strand curves are for rendering and offline animation.
 
+**07e Round 5: naturalness pass on hair, shoes and clothes.**
+- **Hair:**
+  - taller, fuller crown
+  - a quarter of the strands lifted off the surface into a soft outer layer, plus fine frizz
+  - more flyaways (9%) arcing out along the outline
+  - slightly thicker strands
+  - a less red tint, keeping it near-black
+- **Shoes:** rebuilt as toddler sneakers. The foot-shaped plan is wider at the toe. The domed upper is lower at the toe box and higher at the heel and ankle collar. A separate rounded light-blue sole rim wraps the bottom with a small overhang, and the purple has a satin coat.
+- **Romper:**
+  - roomier fit
+  - pant hems flare and rest on the shoes, with soft fabric bunching above them
+  - the hem ring is levelled and smoothed into a clean edge
+- **Collar:** new ribbed lavender band (`Ais_Collar`) at the neckline.
+- **Pockets and moon:** rebuilt with smooth outlines; the edges were stair-stepped. The edge vertices snap to the exact U-pocket and crescent outlines, the interior is relaxed, then everything is projected. They are thicker and raised (2.6 / 2.2 mm).
+- **Fabric:** softer cotton-fleece sheen.
+- `scripts/ba_finalize.sh` rebuilds everything from batch 04 to the final deliverables.
+
 **08 Rigging.** Baby Mo's Rigify rig is reused and scaled to Ais. It provides pelvis, spine, chest, neck and head; shoulders; arms with IK/FK; hands with all fingers; legs and feet; and the Rigify face rig (brows, lids, eyes, jaw, lips, cheeks, tongue) for facial controls. Skinning:
 - **Body and face:** keep Mo's weights.
 - **Hair:** rigid to `DEF-spine.006` (head).

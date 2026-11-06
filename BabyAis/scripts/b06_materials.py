@@ -7,7 +7,7 @@ root = sys.argv[1]; LOOK = sys.argv[2] if len(sys.argv) > 4 else "None"
 import os; SOFT = float(os.environ.get("SOFT", "0.25")); SUNA = float(os.environ.get("SUNA", "2"))
 bpy.ops.wm.open_mainfile(filepath=root + "/checkpoints/BabyAis_v005_clothing.blend")
 sc = bpy.context.scene
-def fabric(name, rgb, rough=0.62, sheen=0.35, grain=0.015, coat=0.0, crough=0.3):
+def fabric(name, rgb, rough=0.58, sheen=0.6, grain=0.02, coat=0.0, crough=0.3):
     m = bpy.data.materials[name]; nt = m.node_tree; nt.nodes.clear(); N = nt.nodes.new; L = nt.links.new
     out = N("ShaderNodeOutputMaterial"); out.location = (600, 0)
     bs = N("ShaderNodeBsdfPrincipled"); bs.location = (300, 0)
@@ -31,8 +31,8 @@ fabric("M_Ais_Fabric_Lavender", (0.40, 0.22, 0.95))
 fabric("M_Ais_Fabric_LightBlue", (0.28, 0.64, 1.0))
 fabric("M_Ais_Pocket_Purple", (0.40, 0.21, 0.95))
 fabric("M_Ais_Moon_White", (0.93, 0.93, 0.92), rough=0.7, sheen=0.4)
-fabric("M_Ais_Shoe_Purple", (0.33, 0.15, 0.88), rough=0.42, sheen=0.15, grain=0.02, coat=0.25, crough=0.25)
-fabric("M_Ais_Shoe_Sole_Blue", (0.30, 0.66, 1.0), rough=0.5, sheen=0.1, grain=0.02)
+fabric("M_Ais_Shoe_Purple", (0.36, 0.16, 0.92), rough=0.38, sheen=0.15, grain=0.008, coat=0.35, crough=0.2)
+fabric("M_Ais_Shoe_Sole_Blue", (0.30, 0.68, 1.0), rough=0.45, sheen=0.1, grain=0.01, coat=0.2, crough=0.3)
 ba_hair_shader.build(bpy.data.materials["M_Ais_Hair"])
 # skin: gentle subsurface warmth (texture colours kept)
 sk = bpy.data.materials["M_Ais_Skin"]; bs = next(n for n in sk.node_tree.nodes if n.type == "BSDF_PRINCIPLED")

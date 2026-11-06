@@ -88,7 +88,7 @@ def vol(d, o):
     """Cohesive dome: volume grows from the part/crown to the widest point just above the ears.
     The waypoint offset only matters at the root (o < .006 -> root lift); LAYER_D separates layers."""
     th = math.degrees(math.acos(max(-1, min(1, d.z))))
-    v = 0.014 + 0.010 * min(max((th - 5) / 55, 0), 1) ** 0.7 + 0.006 * min(max((th - 55) / 35, 0), 1)
+    v = 0.018 + 0.009 * min(max((th - 5) / 55, 0), 1) ** 0.7 + 0.006 * min(max((th - 55) / 35, 0), 1)
     v *= 1 - 0.85 * max(0.0, -d.y - 0.25) / 0.75      # flatter at the forehead hairline
     if o < 0.0045: v = min(v, 0.0035)    # roots at the part sit close to the scalp
     return v + LAYER_D
@@ -306,8 +306,8 @@ for ob in objs:
 # ---------------- 6 soft strand layer: real hair curves following every lock (fluffy, fine strands)
 import os
 DENS = float(os.environ.get("STRAND_DENS", "4600"))      # strands per metre of lock width
-FLY = float(os.environ.get("STRAND_FLY", "0.06"))
-RAD = float(os.environ.get("STRAND_RAD", "0.00022"))
+FLY = float(os.environ.get("STRAND_FLY", "0.09"))
+RAD = float(os.environ.get("STRAND_RAD", "0.00024"))
 rng = random.Random(11)
 def lerp_frame(frame, u):
     x = u * (len(frame) - 1); i = min(int(x), len(frame) - 2); f = x - i
@@ -322,7 +322,7 @@ for name, layer, w, t, frame in LOCK_FRAMES:
     for j in range(n_s):
         fly = rng.random() < FLY
         sx = rng.uniform(-1, 1)
-        rr = 1.0 - abs(rng.gauss(0, 0.35)) if not fly else rng.uniform(1.25, 1.9)
+        rr = (1.0 - abs(rng.gauss(0, 0.35)) if rng.random() > 0.25 else rng.uniform(1.0, 1.55)) if not fly else rng.uniform(1.3, 2.2)
         u0, u1 = rng.uniform(0.0, 0.05), rng.uniform(0.9, 1.0) if not fly else rng.uniform(0.55, 0.95)
         ph1, ph2 = rng.uniform(0, 6.28), rng.uniform(0, 6.28)
         f1, f2 = rng.uniform(0.6, 1.6), rng.uniform(0.8, 2.0)
@@ -338,8 +338,9 @@ for name, layer, w, t, frame in LOCK_FRAMES:
             clump = 0.0 if fly else 0.62 * min(max((u - 0.35) / 0.55, 0), 1) ** 1.2
             sx_u = sx + (cx_ - sx) * clump
             across = w * 0.5 * wf * sx_u * (1 + 0.35 * tip) + (fan * 0.4 + cl_off[ci]) * 0.004 * tip * tip
-            up = t * 0.5 * tf * rr + (0.0018 * tip * tip if fly else 0)
-            jit = B * a1 * math.sin(6.283 * f1 * u + ph1) + Np * a2 * math.sin(6.283 * f2 * u + ph2)
+            up = t * 0.5 * tf * rr + (0.0055 * tip * tip if fly else 0)
+            jit = B * a1 * math.sin(6.283 * f1 * u + ph1) + Np * a2 * math.sin(6.283 * f2 * u + ph2) \
+                + (B * math.sin(6.283 * 7.0 * u + ph2) + Np * math.cos(6.283 * 9.0 * u + ph1)) * 0.00022
             pts.append((c + B * across + Np * up + jit) * k)
         strands.append((pts, RAD * (0.6 if fly else 1.0) * rng.uniform(0.8, 1.15)))
 hc = bpy.data.hair_curves.new("Ais_Hair_Strands")
@@ -360,7 +361,7 @@ hb = nt.nodes.new("ShaderNodeBsdfHairPrincipled"); hb.location = (0, 0)
 try: hb.model = 'CHIANG'
 except Exception: pass
 hb.parametrization = 'MELANIN'
-hb.inputs["Melanin"].default_value = 0.985; hb.inputs["Melanin Redness"].default_value = 0.45
+hb.inputs["Melanin"].default_value = 0.985; hb.inputs["Melanin Redness"].default_value = 0.34
 hb.inputs["Roughness"].default_value = 0.28; hb.inputs["Radial Roughness"].default_value = 0.35
 hb.inputs["Random Color"].default_value = 0.12; hb.inputs["Random Roughness"].default_value = 0.15
 o = nt.nodes.new("ShaderNodeOutputMaterial"); o.location = (300, 0); nt.links.new(hb.outputs[0], o.inputs["Surface"])
