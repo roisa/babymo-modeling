@@ -184,3 +184,40 @@ SAVE=1 $PY scripts/b09_animtest.py $R checkpoints/BabyAis_v006_materials.blend a
 cp BabyAis_Working.blend checkpoints/BabyAis_v007_rigging.blend
 SAVE=BabyAis_Final.blend $PY scripts/b10_present.py $R BabyAis_Working.blend final $S
 ```
+
+---
+
+# Baby Ais: Hijab Edition
+
+**File:** `BabyAis_Hijab_Final.blend`, built from `BabyAis_Final.blend` by `scripts/b11_hijab.py`. The no-hijab file is unchanged.
+**Reference:** `reference/BabyAis_Hijab_reference.jpg`
+**Turnaround:** `renders/hijab_final/BabyAis_Hijab_Turnaround.png`
+**Animation tests:** `renders/hijab_anim_tests/`
+**Rebuild:** `scripts/ba_finalize_hijab.sh`
+
+## Construction
+- **Pink hijab (`Ais_Hijab`).** A parametric cloth surface on a 128×120 spherical grid around the head centre:
+  - **Distance from the body:** each direction finds the outermost body or clothing surface (ears and garments included) and adds a volume offset. The offset is fuller on the dome and back, snug at the face edge and puffy as a cowl at the neck.
+  - **Ears:** every ear vertex raises the surface with a smooth falloff, so ears never poke through and leave no bumps.
+  - **Silhouette:** the sides and back fall in a soft bell from ear level onto the shoulders, giving the reference teardrop shape. Below the chin the cloth hangs as a bib.
+  - **Face opening:** an oval from the upper forehead to under the chin, narrowing slightly at the chin. Its edge vertices are snapped exactly onto the oval curve, so the edge is clean.
+  - **Hem:** snapped onto a curved line, above the moon at the front, over the shoulder tops at the sides, and lower at the back for a cape.
+  - **Folds:** a soft roll where the cloth wraps under the chin, and gentle folds at the front of the neck.
+  - **Thickness and clearance:** 5.5 mm, grown outward, with subdivision for a thick rolled edge. A clearance pass keeps the cloth at least 5 mm off the body.
+- **Lavender inner cap (`Ais_HijabInnerCap`).** It shows as a band across the forehead and tucks under the hijab at the sides.
+- **Star pin (`Ais_HijabStarPin`).** A light-blue bevelled five-point star on her left temple, sitting on the hijab surface.
+- **Hair** is removed in this variant, since the hijab covers it.
+- **Rigging:**
+  - The cap and the star are rigid to the head (`DEF-spine.006`).
+  - The hijab is rigid to the head above the chin. Over the drape it blends into the neck, chest and shoulder weights copied from the nearest body vertices, so it turns with the head and settles on the shoulders.
+- **Materials:** `M_Ais_Hijab_Pink` is a saturated soft-cotton pink with sheen; the cap uses `M_Ais_Fabric_Lavender`; the star uses `M_Ais_HijabStar_Blue`.
+
+## Iterations (`renders/progress/hijab_*.png`)
+1. First pass: boxy vertical walls, jagged cut edges, open throat, ears poking through.
+2. Cowl hugging the chin and neck; edges snapped to exact curves; taller dome.
+3. Drape over the shoulders, chest and back; volume based on a smoothed head (no earmuff bumps); wider jaw opening; thinner band.
+4. Clearance pass, chin roll, curved hem, bigger star.
+5. Ear vertices built into the volume; cap band only at the forehead.
+6. Teardrop bell (overshot into a box).
+7. Partial bell: soft slope onto the shoulders.
+8. Smooth ear blending. Final.
