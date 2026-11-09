@@ -221,3 +221,16 @@ SAVE=BabyAis_Final.blend $PY scripts/b10_present.py $R BabyAis_Working.blend fin
 6. Teardrop bell (overshot into a box).
 7. Partial bell: soft slope onto the shoulders.
 8. Smooth ear blending. Final.
+
+## Hijab refinement round 2 (reference `reference/BabyAis_Hijab_reference_v2.jpg`)
+Feedback: "not like a helmet but like real fabric; the head looks too big". Iterations are in `renders/progress/hijab_refine2_*.png`.
+- **Smaller head:** the head is scaled to 0.88 by a constraint on the rig bone `MCH-ROT-head`. The face rig, eyes, mouth and hijab shrink together, and it works in every pose and animation. The hijab is built around the smaller head and then mapped back to rest pose.
+- **Ears hidden** in this edition only (a mask on the body). Without them the cloth wraps the skull smoothly, with no bumps or dents.
+- **Real fabric drape:** the lower part of the hijab, below the cheeks, is now a cloth simulation. It hangs and settles over the neck, shoulders and chest and around the arms, with the head part pinned. That gives natural folds and a soft, irregular hem instead of a rigid shell. Seeded tiers add soft folds under the chin.
+- **Shape:** rounder, fuller crown; a wider face opening; a lavender forehead band; cap only at the forehead and crown; the hem drapes over the shoulders.
+- **Fixes:**
+  - rig widget meshes are now excluded from every render (they had shown as dents)
+  - a crash in the build script was fixed
+  - the build fails loudly if the cloth simulation explodes
+- **Result:** 14 motion tests clean; QA passes with 0 errors.
+- **Rebuild:** `scripts/ba_finalize_hijab.sh` (the settings are listed in the script).

@@ -150,7 +150,7 @@ def build_R(off_scale=1.0, edge=None, up_shift=0.0, minoff=0.0035):
             if t >= BELL_T:
                 need = BELL_K * rho / max(st, 0.05)
                 if need > H[i, j]: H[i, j] = H[i, j] + (need - H[i, j]) * w * BELL_W
-            rho = max(rho, H[i, j] * st) if t >= 82 else H[i, j] * st
+            rho = max(rho, H[i, j] * st) if t >= BELL_T - 4 else H[i, j] * st
     # bib: below the chin the cloth hangs - horizontal radius may not shrink going down
     for j in range(NA):
         rho = 0.0
@@ -198,7 +198,7 @@ def interp(Rg, a, t):
 def hem_z(a):
     back = (1 + math.cos(math.radians(a))) / 2; side = abs(math.sin(math.radians(a)))
     front = max(0.0, -math.cos(math.radians(a)))
-    return P_["HEM_FRONT"] * (1 - back) + P_["HEM_BACK"] * back + 0.012 * side ** 2 - 0.016 * front ** 2 \
+    return P_["HEM_FRONT"] * (1 - back) + P_["HEM_BACK"] * back + float(os.environ.get("HEM_SIDE_ADD", "0.012")) * side ** 2 - 0.016 * front ** 2 \
         + P_["HEM_WAVE"] * (math.sin(math.radians(a) * 7 + 0.4) * 0.7 + 0.3 * math.sin(math.radians(a) * 13))
 def make_surface(name, Rg, cut_open_shift=0.0, tmax_keep=None, folds=True):
     def rad(a, t):
@@ -403,6 +403,61 @@ def skin(ob, rigid=False):
         ob.data.vertices[vi].co = OMi @ (Mb.inverted() @ (OM @ ob.data.vertices[vi].co))
     mw = ob.matrix_world.copy(); ob.parent = rig; ob.matrix_world = mw
     am = ob.modifiers.new("Armature", 'ARMATURE'); am.object = rig
+# ---- cloth simulation of the drape (head part pinned): real fabric folds over neck, shoulders and chest
+SIM_F = int(os.environ.get("SIM_FRAMES", "0"))
+if SIM_F:
+    PIN_T = float(os.environ.get("PIN_T", "112"))
+    _bm = bmesh.new(); _bm.from_mesh(hijab.data)
+    _n0 = len(_bm.verts)
+    bmesh.ops.remove_doubles(_bm, verts=_bm.verts, dist=0.0008 * k)
+    bmesh.ops.dissolve_degenerate(_bm, dist=0.0008 * k, edges=_bm.edges[:])
+    bmesh.ops.delete(_bm, geom=[v for v in _bm.verts if not v.link_faces], context="VERTS")
+    _short = min((e.calc_length() for e in _bm.edges), default=0) / k
+    _bm.to_mesh(hijab.data); _bm.free()
+    print("sim prep verts", _n0, "->", len(hijab.data.vertices), "shortest edge mm %.3f" % (_short * 1000))
+    pg = hijab.vertex_groups.new(name="Pin")
+    for v in hijab.data.vertices:
+        d_ = (hijab.matrix_world @ v.co) / k - Cc
+        t_ = math.degrees(math.acos(max(-1, min(1, d_.normalized().z))))
+        w_ = min(max((PIN_T + 10 - t_) / 10, 0.0), 1.0)
+        if w_ > 0: pg.add([v.index], w_, 'REPLACE')
+    cols = []
+    for n in ("Ais_Body", "Ais_Shirt", "Ais_Romper"):
+        o = bpy.data.objects.get(n)
+        if o and not any(m.type == 'COLLISION' for m in o.modifiers):
+            o.modifiers.new("Collision", 'COLLISION'); o.collision.thickness_outer = 0.001 * k; o.collision.cloth_friction = 5; o.collision.damping = 0.5; cols.append(o)
+    cl = hijab.modifiers.new("Drape", 'CLOTH'); cs_ = cl.settings
+    cs_.quality = 16; cs_.mass = 0.15; cs_.tension_stiffness = 20; cs_.compression_stiffness = 20; cs_.shear_stiffness = 10
+    cs_.bending_stiffness = float(os.environ.get("BEND", "1.5")); cs_.air_damping = 2.0
+    cs_.vertex_group_mass = "Pin"; cs_.pin_stiffness = 5.0
+    cl.collision_settings.distance_min = 0.0012 * k; cl.collision_settings.collision_quality = 4; cl.collision_settings.use_self_collision = False
+    sc_ = bpy.context.scene; cl.point_cache.frame_start = 1; cl.point_cache.frame_end = SIM_F + 1
+    for f in range(1, SIM_F + 2): sc_.frame_set(f)
+    _pre = [v.co.copy() for v in hijab.data.vertices]
+    with bpy.context.temp_override(object=hijab, active_object=hijab, selected_objects=[hijab], selected_editable_objects=[hijab]):
+        bpy.ops.object.modifier_apply(modifier="Drape")
+    _dd = sorted((v.co - p).length / k for v, p in zip(hijab.data.vertices, _pre))
+    print("moved >2mm", sum(1 for x in _dd if x > 0.002), "of", len(_dd), "| >50mm", sum(1 for x in _dd if x > 0.05))
+    print("sim displacement mm median %.2f p95 %.2f max %.2f" % (_dd[len(_dd) // 2] * 1000, _dd[int(len(_dd) * .95)] * 1000, _dd[-1] * 1000))
+    _bad = [i for i, (v, p) in enumerate(zip(hijab.data.vertices, _pre)) if (v.co - p).length / k > 0.05]
+    if len(_bad) > 150: raise SystemExit("CLOTH SIM EXPLODED")
+    if _bad:   # repair the few runaway vertices: restore + relax their neighbourhood
+        _bm = bmesh.new(); _bm.from_mesh(hijab.data); _bm.verts.ensure_lookup_table()
+        ring = {_bm.verts[i] for i in _bad}
+        for i in _bad: _bm.verts[i].co = _pre[i]
+        for _ in range(2): ring |= {e.other_vert(v) for v in list(ring) for e in v.link_edges}
+        for _ in range(10):
+            for v in ring:
+                if v.index in _bad or True:
+                    nb = [e.other_vert(v).co for e in v.link_edges]
+                    if v.index in _bad: v.co = sum(nb, Vector()) / len(nb)
+        _bm.to_mesh(hijab.data); _bm.free()
+        print("repaired runaway verts", len(_bad))
+    sc_.frame_set(1)
+    for o in cols:
+        for m in [m for m in o.modifiers if m.type == 'COLLISION']: o.modifiers.remove(m)
+    hijab.vertex_groups.remove(hijab.vertex_groups["Pin"])
+    print("cloth sim frames", SIM_F)
 skin(hijab); skin(cap, rigid=True); skin(star, rigid=True)
 for ob, th, cs in ((hijab, P_["THICK"], True), (cap, P_["CAP_THICK"], False)):
     if cs:
