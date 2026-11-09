@@ -271,6 +271,8 @@ const V = {}; const ais = {};
 const NEED = [['Excavator'], ['DumpTruck'], ['Bulldozer'], ['CementMixer'], ['CraneTruck'], ['RoadRoller'], ['Tractor']];
 let loaded = 0; const totalFiles = NEED.length + 1;
 function bump() { loaded++; $('barFill').style.width = (loaded / totalFiles * 100) + '%'; }
+// models load as .glb; where a host won't serve that extension the same bytes are published as .glb.wasm
+const loadModel = url => loader.loadAsync(url).catch(() => loader.loadAsync(url + '.wasm'));
 function prep(root) { root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); return root; }
 /* procedural paint the exporter can't carry: mixer drum spiral stripes, crane hook hazard stripes (vertex colours) */
 function paint(mesh, fn) {
@@ -285,8 +287,8 @@ function paintSpecials() {
 }
 async function loadAll() {
   $('loadTxt').textContent = t('loading');
-  const jobs = NEED.map(([n]) => loader.loadAsync(`assets/vehicles/${n}.glb`).then(g => { V[n] = prep(g.scene); bump(); }));
-  jobs.push(loader.loadAsync('assets/characters/BabyAis.glb').then(g => {
+  const jobs = NEED.map(([n]) => loadModel(`assets/vehicles/${n}.glb`).then(g => { V[n] = prep(g.scene); bump(); }));
+  jobs.push(loadModel('assets/characters/BabyAis.glb').then(g => {
     ais.root = prep(g.scene); ais.clips = g.animations; ais.mixer = new THREE.AnimationMixer(ais.root); bump();
   }));
   await Promise.all(jobs);
