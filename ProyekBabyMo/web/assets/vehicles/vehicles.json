@@ -1,0 +1,194 @@
+{
+ "Excavator": {
+  "kb": 603,
+  "meshes": 14,
+  "tris": 33776,
+  "pivots": [
+   "PV_Boom",
+   "PV_Bucket",
+   "PV_Stick",
+   "PV_Swing"
+  ],
+  "origin": [
+   -3.5999999046325684,
+   0.0,
+   0.0
+  ]
+ },
+ "DumpTruck": {
+  "kb": 1462,
+  "meshes": 31,
+  "tris": 105304,
+  "pivots": [
+   "PV_Bed",
+   "PV_Wheel_WheelL0",
+   "PV_Wheel_WheelL1",
+   "PV_Wheel_WheelL2",
+   "PV_Wheel_WheelR0",
+   "PV_Wheel_WheelR1",
+   "PV_Wheel_WheelR2"
+  ],
+  "origin": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "Bulldozer": {
+  "kb": 576,
+  "meshes": 9,
+  "tris": 31876,
+  "pivots": [
+   "PV_Blade"
+  ],
+  "origin": [
+   3.5999999046325684,
+   0.0,
+   0.0
+  ]
+ },
+ "CraneTruck": {
+  "kb": 608,
+  "meshes": 37,
+  "tris": 39092,
+  "pivots": [
+   "PV_Boom",
+   "PV_Hook",
+   "PV_Swing",
+   "PV_Wheel_WheelL0",
+   "PV_Wheel_WheelL1",
+   "PV_Wheel_WheelL2",
+   "PV_Wheel_WheelR0",
+   "PV_Wheel_WheelR1",
+   "PV_Wheel_WheelR2"
+  ],
+  "origin": [
+   -3.5999999046325684,
+   3.799999952316284,
+   0.0
+  ]
+ },
+ "CementMixer": {
+  "kb": 507,
+  "meshes": 32,
+  "tris": 33624,
+  "pivots": [
+   "PV_Drum",
+   "PV_Wheel_WheelL0",
+   "PV_Wheel_WheelL1",
+   "PV_Wheel_WheelL2",
+   "PV_Wheel_WheelR0",
+   "PV_Wheel_WheelR1",
+   "PV_Wheel_WheelR2"
+  ],
+  "origin": [
+   0.0,
+   3.799999952316284,
+   0.0
+  ]
+ },
+ "WheelLoader": {
+  "kb": 1024,
+  "meshes": 24,
+  "tris": 70988,
+  "pivots": [
+   "PV_Arm",
+   "PV_Wheel_WheelL0",
+   "PV_Wheel_WheelL1",
+   "PV_Wheel_WheelR0",
+   "PV_Wheel_WheelR1"
+  ],
+  "origin": [
+   3.5999999046325684,
+   3.799999952316284,
+   0.0
+  ]
+ },
+ "RoadRoller": {
+  "kb": 284,
+  "meshes": 14,
+  "tris": 17376,
+  "pivots": [
+   "PV_Drum",
+   "PV_Wheel_WheelL",
+   "PV_Wheel_WheelR"
+  ],
+  "origin": [
+   -3.5999999046325684,
+   7.599999904632568,
+   0.0
+  ]
+ },
+ "Tractor": {
+  "kb": 949,
+  "meshes": 21,
+  "tris": 66796,
+  "pivots": [
+   "PV_Wheel_FrontWheelL",
+   "PV_Wheel_FrontWheelR",
+   "PV_Wheel_RearWheelL",
+   "PV_Wheel_RearWheelR"
+  ],
+  "origin": [
+   0.0,
+   7.599999904632568,
+   0.0
+  ]
+ },
+ "Forklift": {
+  "kb": 448,
+  "meshes": 19,
+  "tris": 27976,
+  "pivots": [
+   "PV_Forks",
+   "PV_Wheel_FrontWheelL",
+   "PV_Wheel_FrontWheelR",
+   "PV_Wheel_RearWheelL",
+   "PV_Wheel_RearWheelR"
+  ],
+  "origin": [
+   3.5999999046325684,
+   7.599999904632568,
+   0.0
+  ]
+ },
+ "GarbageTruck": {
+  "kb": 460,
+  "meshes": 34,
+  "tris": 31432,
+  "pivots": [
+   "PV_Bin",
+   "PV_Wheel_WheelL0",
+   "PV_Wheel_WheelL1",
+   "PV_Wheel_WheelL2",
+   "PV_Wheel_WheelR0",
+   "PV_Wheel_WheelR1",
+   "PV_Wheel_WheelR2"
+  ],
+  "origin": [
+   -1.7999999523162842,
+   11.600000381469727,
+   0.0
+  ]
+ },
+ "FireTruck": {
+  "kb": 697,
+  "meshes": 36,
+  "tris": 44392,
+  "pivots": [
+   "PV_Ladder",
+   "PV_LadderSwing",
+   "PV_Wheel_WheelL0",
+   "PV_Wheel_WheelL1",
+   "PV_Wheel_WheelL2",
+   "PV_Wheel_WheelR0",
+   "PV_Wheel_WheelR1",
+   "PV_Wheel_WheelR2"
+  ],
+  "origin": [
+   1.7999999523162842,
+   11.600000381469727,
+   0.0
+  ]
+ }
+}

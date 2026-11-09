@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><title>load test</title>
+<script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.min.js","three/addons/":"./vendor/three/examples/jsm/"}}</script></head>
+<body style="margin:0"><canvas id="c" width="900" height="600"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+const r = new THREE.WebGLRenderer({canvas: document.getElementById('c'), antialias: true, preserveDrawingBuffer: true});
+const sc = new THREE.Scene(); sc.background = new THREE.Color(0xeaf4ff);
+const cam = new THREE.PerspectiveCamera(35, 1.5, 0.05, 100); cam.position.set(3.2, 2.2, 6.5); cam.lookAt(0, 0.6, 0);
+sc.add(new THREE.HemisphereLight(0xffffff, 0x99aabb, 2.2)); const d = new THREE.DirectionalLight(0xffffff, 2.2); d.position.set(3, 6, 4); sc.add(d);
+const L = new GLTFLoader(); L.setMeshoptDecoder(MeshoptDecoder);
+const out = {};
+const ais = await L.loadAsync('assets/characters/BabyAis.glb');
+ais.scene.scale.setScalar(4.5); ais.scene.position.set(-1.4, 0, 1.5); sc.add(ais.scene);
+const mixer = new THREE.AnimationMixer(ais.scene);
+out.clips = ais.animations.map(a => a.name + ':' + a.duration.toFixed(2));
+const ex = await L.loadAsync('assets/vehicles/Excavator.glb'); sc.add(ex.scene); ex.scene.position.set(0.8, 0, 0);
+const names = []; ex.scene.traverse(o => { if (o.name.startsWith('PV_')) names.push(o.name); }); out.pivots = names;
+const boom = ex.scene.getObjectByName('PV_Boom'), swing = ex.scene.getObjectByName('PV_Swing');
+const clip = THREE.AnimationClip.findByName(ais.animations, new URLSearchParams(location.search).get('clip') || 'Wave');
+mixer.clipAction(clip).play();
+mixer.update(parseFloat(new URLSearchParams(location.search).get('t') || '1.0'));
+if (boom) boom.rotation.x = -0.5; if (swing) swing.rotation.y = 0.6;
+r.render(sc, cam);
+window.__out = out; document.title = 'READY';
+</script></body></html>
