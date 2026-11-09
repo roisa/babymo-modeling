@@ -27,7 +27,7 @@ SPECS = {
     "CraneTruck": [
         ("PV_Swing", None, (0, 0.65, 0.7), r"^Crane_(Superstructure|OpCab_.*|LiftCyl.*)$"),
         ("PV_Boom", "PV_Swing", (-0.16, 0.95, 1.05), r"^Crane_(Boom1|Boom2|BoomFoot|Sheave)$"),
-        ("PV_Hook", "PV_Boom", (-0.16, -1.31, 1.65), r"^Crane_(HookBlock|Hook)$"),
+        ("PV_Hook", "PV_Boom", (-0.16, -1.31, 1.65), r"^Crane_(HookBlock|Hook|Cable.*)$"),
     ],
     "CementMixer": [
         ("PV_Drum", None, (0, -0.25, 1.0), r"^Mix_(Drum|DrumRing.*)$"),

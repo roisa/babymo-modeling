@@ -428,7 +428,10 @@ async function job5() {
   // cable drawn each frame from the sheave down to the hook
   const cableMat = new THREE.LineBasicMaterial({ color: 0x222222 }); const cableG = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
   const cable = new THREE.Line(cableG, cableMat); scene.add(cable); const tip = new THREE.Vector3(), hp = new THREE.Vector3();
-  const cableTick = { f: () => { boom.localToWorld(tip.set(0, .55, -2.25)); hook.getWorldPosition(hp); cableG.setFromPoints([tip.clone(), hp.clone().add(new THREE.Vector3(0, .25, 0))]); } };
+  let sheave = null; boom.traverse(o => { if (o.isMesh && /DarkGrey/.test(o.name)) sheave = o; });
+  const sheaveBox = new THREE.Box3();
+  const cableTick = { f: () => { if (sheave) { sheaveBox.setFromObject(sheave); sheaveBox.getCenter(tip); } else boom.getWorldPosition(tip);
+    hook.getWorldPosition(hp); cableG.setFromPoints([tip.clone(), hp.clone().add(new THREE.Vector3(0, .35, 0))]); } };
   tickers.add(cableTick); hook.visible = true;
   await aisWalkTo(33.2, .9, Math.PI / 2); shot([36.4, 6.0, 7.6], [36.2, 1.4, -1.2]);
   say(t('crName'), t('crFact')); await to(boom.rotation, 'x', -.12, .8); await to(boom.rotation, 'x', 0, .6); await wait(1400);
@@ -466,7 +469,8 @@ async function finale() {
   const deck = new THREE.Mesh(new THREE.BoxGeometry(1.2, .14, 1.2), yel); deck.position.set(-1.1, 2.1, 0); g.add(deck);
   const roof = new THREE.Mesh(new THREE.ConeGeometry(.95, .9, 4), red); roof.position.set(-1.1, 3.4, 0); roof.rotation.y = Math.PI / 4; g.add(roof);
   for (const [x, z] of [[-1.6, -.5], [-.6, -.5], [-1.6, .5], [-.6, .5]]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 2.9, 10), wht); p.position.set(x, 1.45, z); g.add(p); }
-  const slide = new THREE.Mesh(new THREE.BoxGeometry(.8, .1, 3.0), red); slide.position.set(.6, 1.1, 0); slide.rotation.z = -.62; slide.rotation.y = Math.PI / 2; g.add(slide);
+  const slide = new THREE.Mesh(new THREE.BoxGeometry(3.0, .1, .8), red); slide.position.set(.25, 1.05, 0); slide.rotation.z = -.68; g.add(slide);
+  for (const s of [-1, 1]) { const rail = new THREE.Mesh(new THREE.BoxGeometry(3.0, .16, .06), yel); rail.position.set(.25, 1.13, s * .42); rail.rotation.z = -.68; g.add(rail); }
   // swing set
   const frameMat = blu; for (const x of [1.8, 3.8]) for (const s of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, 2.6, 10), frameMat); leg.position.set(x, 1.2, s * .5); leg.rotation.x = s * .35; g.add(leg); }
   const top = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, 2.2, 10), frameMat); top.rotation.z = Math.PI / 2; top.position.set(2.8, 2.45, 0); g.add(top);
@@ -507,7 +511,8 @@ async function run() {
     shot([-2.6, 3.0, 9.4], [-1.0, 1.2, 1.5]); drawTrack(0);
     say(t('hello')); await wait(2600);
     const steps = [job1, job2, job3, job4, job5];
-    for (let i = 0; i < steps.length; i++) {
+    const startAt = Math.min(Math.max((+new URLSearchParams(location.search).get('start') || 1) - 1, 0), 4);   // test shortcut
+    for (let i = startAt; i < steps.length; i++) {
       game.level = i; await steps[i]();
       if (i < steps.length - 1) { say(t('jobDone')); clearDock(); const b = button(t('next')); await tapOnce(b); clearDock(); }
     }

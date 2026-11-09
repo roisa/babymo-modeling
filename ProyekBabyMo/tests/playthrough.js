@@ -29,7 +29,7 @@ const { chromium } = require('playwright');
           const before = await p.evaluate(() => document.getElementById('sayTxt').textContent);
           await bt.click().catch(() => {}); await p.waitForTimeout(700);
           const moved = await p.evaluate(b4 => !!document.querySelector('#dock .yes') || document.querySelectorAll('#dock button').length === 0 || (document.getElementById('sayTxt').textContent !== b4 && !/coba|Try|bukan|not/i.test(document.getElementById('sayTxt').textContent)), before);
-          if (moved) break;
+          if (moved) { if (shots < 40) { await p.waitForTimeout(4500); await p.screenshot({ path: `${out}/s${String(++shots).padStart(2, '0')}_L${st.lvl + 1}_pick.png` }); } break; }
         }
       } else {
         await btns[live].click().catch(() => {});
