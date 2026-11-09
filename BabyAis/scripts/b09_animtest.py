@@ -7,6 +7,8 @@ sys.path.insert(0, sys.argv[-1]); import ba_common as C
 root = sys.argv[1]; SRC = root + "/" + sys.argv[2]; OUT = root + "/renders/" + sys.argv[3]
 bpy.ops.wm.open_mainfile(filepath=SRC)
 sc = bpy.context.scene; rig = bpy.data.objects["Ais_Rig"]
+for o in bpy.data.objects:
+    if o.name.startswith(("WGT", "cs_")): o.hide_render = True
 if "Ais_Pose_Presentation" not in bpy.data.actions:
     with bpy.data.libraries.load(root + "/reference/BABY_MO_v008_ORIGINAL.blend", link=False) as (src, dst):
         dst.actions = ["rigAction"]

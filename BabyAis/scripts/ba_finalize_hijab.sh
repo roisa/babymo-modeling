@@ -1,6 +1,8 @@
 #!/bin/bash
 # Build the hijab variant from BabyAis_Final.blend and produce its deliverables. Run from BabyAis/.
 set -e
+# hijab shape settings (refinement round 2, batch 17)
+export OFF_TOP=0.012 OFF_SIDE=0.014 OFF_EDGE=0.003 COWL=0.017 THICK=0.0038 FOLD_AMP=0.0018 TIER_AMP=0.0048 DRAPE_AMP=0.003 HEM_WAVE=0.002 HEM_FRONT=0.305 HEM_BACK=0.288 BELL_W=0.15 R_SMOOTH=70 AW=64 TH_UP=32 TH_DN=33 THC=105 CHIN_ROLL=0.009 CHIN_T=139 CHIN_NARROW=0.46 CAP_BAND=12 HEAD_SCALE=0.88
 P=/opt/bpyenv/bin/python; R=$PWD; S=$PWD/scripts
 OUT=BabyAis_Hijab_Final.blend $P -I scripts/b11_hijab.py $R $S 2>&1 | grep -E "SAVED|rror"
 rm -rf renders/hijab_final renders/hijab_anim_tests

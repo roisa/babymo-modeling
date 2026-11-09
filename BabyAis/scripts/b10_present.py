@@ -12,6 +12,8 @@ if smile:
     for st in list(tr.strips): tr.strips.remove(st)
     a = bpy.data.actions[smile]; st = tr.strips.new("smile", 1, a); st.action_slot = a.slots[0]; st.blend_type = 'COMBINE'
     ad.action_blend_type = 'COMBINE'
+for o in bpy.data.objects:                 # rig widget / custom-shape meshes never render
+    if o.name.startswith(("WGT", "cs_")): o.hide_render = True
 sc.frame_set(1); bpy.context.view_layer.update()
 S = int(os.environ.get("SAMPLES", "48"))
 H = rig.matrix_world @ rig.pose.bones["head"].head

@@ -6,6 +6,7 @@ sys.path.insert(0,sd); import ba_common as C
 bpy.ops.wm.open_mainfile(filepath=blend)
 sc=bpy.context.scene; sc.frame_set(sc.frame_current)
 for o in bpy.data.objects:
+    if o.name.startswith(("WGT", "cs_")): o.hide_render = True
     if o.name in ("Safezone",) or o.name in os.environ.get("HIDE","").split(","): o.hide_render=True
 os.makedirs(out,exist_ok=True)
 for spec in argv[i+1:]:
