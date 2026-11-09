@@ -1,0 +1,523 @@
+<title>Proyek Baby Mo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: full-bleed 3D construction site; a sky-blue top bar (job track + language), a speech card from Ais,
+   and one big chunky action dock at the bottom - everything sized for a 3-8 year old's thumb. Single sunny theme. */
+:root {
+  --sky: #9fd8ff;          /* sky + page ground */
+  --ink: #1d2a3a;          /* text on light */
+  --paper: #fffaf0;        /* speech card */
+  --toy: #ffbb00;          /* the vehicles' yellow, the one accent */
+  --toy-deep: #d98a00;     /* pressed / shadow of the accent */
+  --mint: #2fbf71;         /* correct / done */
+  --dirt: #8a5a33;         /* site brown, used for small labels */
+  --display: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Nunito", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body { background: var(--sky); color: var(--ink); font-family: var(--body); overflow: hidden; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+#game { position: fixed; inset: 0; }
+#c { width: 100%; height: 100%; display: block; }
+
+/* top bar */
+.top { position: fixed; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px)); padding-bottom: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); pointer-events: none; }
+.brand { font-family: var(--display); font-weight: 800; font-size: clamp(18px, 4.6vw, 26px); color: var(--ink); line-height: 1; letter-spacing: .2px;
+  background: var(--toy); padding: 6px 12px 4px; border-radius: 14px; box-shadow: 0 4px 0 var(--toy-deep); white-space: nowrap; }
+.track { display: flex; gap: 6px; flex: 1; min-width: 0; justify-content: center; }
+.step { width: clamp(26px, 6vw, 38px); height: clamp(26px, 6vw, 38px); border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: clamp(13px, 3.4vw, 17px); background: rgba(255,255,255,.75); color: var(--ink);
+  border: 3px solid rgba(255,255,255,.95); }
+.step.now { background: var(--toy); border-color: #fff; transform: scale(1.12); }
+.step.done { background: var(--mint); color: #fff; }
+.lang { pointer-events: auto; font-family: var(--display); font-weight: 800; font-size: 16px; color: var(--ink); background: #fff; border: 0;
+  border-radius: 12px; padding: 8px 12px 6px; box-shadow: 0 3px 0 rgba(0,0,0,.15); cursor: pointer; }
+.lang:focus-visible, .act:focus-visible, .num:focus-visible, .big:focus-visible { outline: 4px solid #1b6fff; outline-offset: 3px; }
+
+/* speech card */
+.say { position: fixed; z-index: 4; top: calc(66px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+  margin: 0 auto; max-width: 560px; background: var(--paper); border-radius: 22px; padding: 12px 16px 12px; box-shadow: 0 6px 0 rgba(29,42,58,.12);
+  display: flex; gap: 12px; align-items: center; transition: transform .25s ease, opacity .25s ease; }
+.say.hide { opacity: 0; transform: translateY(-12px); }
+.say .who { flex: none; font-family: var(--display); font-weight: 800; color: #fff; background: #ff5a9a; border-radius: 12px; padding: 4px 9px 2px; font-size: 14px; }
+.say .txt { font-weight: 800; font-size: clamp(16px, 4.2vw, 21px); line-height: 1.25; text-wrap: balance; min-width: 0; }
+.say .txt small { display: block; font-weight: 700; font-size: .78em; color: var(--dirt); margin-top: 2px; }
+.speak { flex: none; border: 0; background: #e9f4ff; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: grid; place-items: center; }
+.speak svg { width: 22px; height: 22px; fill: var(--ink); }
+
+/* action dock */
+.dock { position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); padding-top: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.act, .num, .big { font-family: var(--display); font-weight: 800; border: 0; cursor: pointer; color: var(--ink); transition: transform .08s ease, box-shadow .08s ease; }
+.act { font-size: clamp(22px, 6vw, 30px); background: var(--toy); padding: 14px 34px 10px; border-radius: 26px; box-shadow: 0 7px 0 var(--toy-deep); min-width: 180px; }
+.act:active, .num:active, .big:active { transform: translateY(5px); box-shadow: 0 2px 0 var(--toy-deep); }
+.act[disabled] { opacity: .45; cursor: default; transform: none; }
+.num { font-size: clamp(28px, 8vw, 40px); width: clamp(64px, 17vw, 84px); height: clamp(64px, 17vw, 84px); border-radius: 22px; background: #fff; box-shadow: 0 7px 0 #c9d6e3; }
+.num.no { animation: shake .35s; background: #ffd9d9; }
+.num.yes { background: var(--mint); color: #fff; }
+.chip { width: clamp(64px, 17vw, 84px); height: clamp(64px, 17vw, 84px); border-radius: 22px; box-shadow: 0 7px 0 rgba(0,0,0,.18); }
+@keyframes shake { 25% { transform: translateX(-6px) } 75% { transform: translateX(6px) } }
+
+/* start / loading / finale overlay */
+.over { position: fixed; inset: 0; z-index: 8; display: grid; place-items: center; background: linear-gradient(#9fd8ff, #d9f0ff 60%, #ffe9a8);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px; text-align: center; }
+.over.clear { background: transparent; pointer-events: none; }
+.over.clear .card { pointer-events: auto; }
+.card { max-width: 440px; display: grid; gap: 14px; justify-items: center; }
+.card h1 { font-family: var(--display); font-weight: 800; font-size: clamp(38px, 11vw, 60px); line-height: .95; margin: 0; color: var(--ink); text-wrap: balance; }
+.card h1 span { color: #fff; -webkit-text-stroke: 0; background: var(--toy); padding: 0 12px; border-radius: 14px; box-shadow: 0 6px 0 var(--toy-deep); display: inline-block; margin-top: 6px; }
+.card p { margin: 0; font-weight: 700; font-size: clamp(16px, 4.4vw, 19px); line-height: 1.4; max-width: 34ch; }
+.big { font-size: clamp(26px, 7vw, 34px); background: var(--toy); padding: 16px 40px 12px; border-radius: 28px; box-shadow: 0 8px 0 var(--toy-deep); }
+.bar { width: min(280px, 80vw); height: 16px; background: rgba(255,255,255,.8); border-radius: 10px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--toy); transition: width .2s; }
+.note { font-size: 13px; color: var(--dirt); font-weight: 700; }
+.err { color: #b3261e; font-weight: 800; }
+@media (prefers-reduced-motion: reduce) { .say, .act, .num, .big { transition: none; } }
+</style>
+
+<script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.min.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
+
+<div id="game"><canvas id="c" aria-label="Proyek Baby Mo construction site"></canvas></div>
+
+<div class="top">
+  <div class="brand">Proyek Baby Mo</div>
+  <div class="track" id="track" aria-label="Pekerjaan"></div>
+  <button class="lang" id="lang" type="button" aria-label="Ganti bahasa">EN</button>
+</div>
+
+<div class="say hide" id="say" role="status" aria-live="polite">
+  <div class="who">Ais</div>
+  <div class="txt" id="sayTxt"></div>
+  <button class="speak" id="speak" type="button" aria-label="Dengarkan lagi"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 4V5L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg></button>
+</div>
+
+<div class="dock" id="dock"></div>
+
+<div class="over" id="over">
+  <div class="card" id="card">
+    <h1>Proyek<br><span>Baby Mo</span></h1>
+    <p id="loadTxt">Menyiapkan kendaraan proyek…</p>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="note">Ekskavator · Truk Jungkit · Buldoser · Truk Molen · Truk Derek</div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+
+/* ---------------------------------------------------------------- words (ID first, EN second) */
+const T = {
+  loading: ["Menyiapkan kendaraan proyek…", "Getting the work vehicles ready…"],
+  ready: ["Ayo bantu Ais membangun taman bermain untuk teman-teman di masjid!", "Help Ais build a playground for the kids at the masjid!"],
+  start: ["Bismillah, mulai!", "Bismillah, let's go!"],
+  hello: ["Assalamu'alaikum! Aku Ais. Ayo kita bangun taman bermain!", "Assalamu'alaikum! I'm Ais. Let's build a playground!"],
+  // job 1
+  exName: ["Ekskavator", "Excavator"], exFact: ["Ekskavator punya lengan panjang dan sendok untuk menggali tanah.", "An excavator has a long arm and a bucket to dig the ground."],
+  exAsk: ["Tekan GALI untuk mengambil tanah dan taruh di truk!", "Press DIG to scoop the dirt into the truck!"], exBtn: ["Gali!", "Dig!"],
+  exMore: ["Bagus! Gali lagi!", "Great! Dig again!"],
+  // job 2
+  dtName: ["Truk Jungkit", "Dump Truck"], dtFact: ["Truk jungkit mengangkut batu dan tanah, lalu menuangnya.", "A dump truck carries rocks and dirt, then tips them out."],
+  dtAsk: ["Ada berapa batu di truk? Ayo hitung!", "How many rocks are in the truck? Let's count!"],
+  dtWrong: ["Hmm, coba hitung lagi pelan-pelan.", "Hmm, let's count again slowly."],
+  dtGo: ["Betul! Ayo antar dan tuang batunya!", "Right! Let's drive and tip the rocks!"], dtBtn: ["Tuang!", "Tip it!"],
+  // job 3
+  bdName: ["Buldoser", "Bulldozer"], bdFact: ["Buldoser punya pisau besar di depan untuk meratakan tanah.", "A bulldozer has a big blade in front to make the ground flat."],
+  bdAsk: ["Tekan DORONG sampai tanahnya rata!", "Press PUSH until the ground is flat!"], bdBtn: ["Dorong!", "Push!"],
+  // job 4
+  mxName: ["Truk Molen", "Cement Mixer"], mxFact: ["Molen berputar-putar supaya semen tidak mengeras.", "The drum keeps spinning so the cement doesn't get hard."],
+  mxAsk: ["Putar molennya 3 kali, lalu tuang semennya!", "Spin the drum 3 times, then pour the cement!"], mxBtn: ["Putar!", "Spin!"], mxPour: ["Tuang!", "Pour!"],
+  // job 5
+  crName: ["Truk Derek", "Crane Truck"], crFact: ["Derek punya kait untuk mengangkat barang yang berat.", "A crane has a hook to lift heavy things."],
+  crAsk: ["Angkat balok yang warnanya…", "Lift the block that is…"],
+  red: ["MERAH", "RED"], yellow: ["KUNING", "YELLOW"], blue: ["BIRU", "BLUE"],
+  crWrong: ["Itu bukan warnanya. Coba yang lain!", "That's not the colour. Try another!"],
+  // praise + finale
+  praise: [["Hebat!", "Awesome!"], ["MasyaAllah, pintar!", "MasyaAllah, so clever!"], ["Keren sekali!", "So cool!"], ["Alhamdulillah, berhasil!", "Alhamdulillah, done!"]],
+  jobDone: ["Pekerjaan selesai! Lanjut ke kendaraan berikutnya.", "Job done! On to the next vehicle."], next: ["Lanjut", "Next"],
+  finale: ["Alhamdulillah! Taman bermainnya jadi! Terima kasih sudah membantu.", "Alhamdulillah! The playground is ready! Thank you for helping."],
+  again: ["Main lagi", "Play again"],
+  fail: ["Gagal memuat permainan. Periksa koneksi lalu muat ulang halaman.", "The game couldn't load. Check the connection and reload the page."],
+};
+let LANG = 0;
+try { LANG = localStorage.getItem('pbm-lang') === 'en' ? 1 : 0; } catch (e) {}
+const t = k => (Array.isArray(T[k][0]) ? T[k] : T[k])[LANG];
+
+/* ---------------------------------------------------------------- voice + sound */
+let voiceOn = true, lastLine = "";
+function speak(text) {
+  lastLine = text;
+  try {
+    if (!voiceOn || !('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/[…!]/g, '.'));
+    u.lang = LANG ? 'en-US' : 'id-ID'; u.rate = 0.92; u.pitch = 1.25;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+let AC = null;
+function tone(f = 660, d = .12, type = 'triangle', v = .12, slide = 0) {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = f;
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, f + slide), AC.currentTime + d);
+    g.gain.setValueAtTime(v, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + d);
+    o.connect(g).connect(AC.destination); o.start(); o.stop(AC.currentTime + d + .02);
+  } catch (e) {}
+}
+const sfx = {
+  pop: () => tone(520, .1, 'sine', .15, 300),
+  yes: () => { tone(660, .12); setTimeout(() => tone(880, .16), 110); setTimeout(() => tone(1175, .22), 230); },
+  no: () => tone(220, .25, 'square', .06, -60),
+  thud: () => tone(110, .22, 'sine', .25, -50),
+  engine: (d = .8) => tone(70, d, 'sawtooth', .05, 20),
+};
+
+/* ---------------------------------------------------------------- UI helpers */
+const $ = id => document.getElementById(id);
+const dock = $('dock'), sayBox = $('say'), sayTxt = $('sayTxt');
+function say(main, sub, voice = true) {
+  sayTxt.innerHTML = ''; const m = document.createElement('span'); m.textContent = main; sayTxt.appendChild(m);
+  if (sub) { const s = document.createElement('small'); s.textContent = sub; sayTxt.appendChild(s); }
+  sayBox.classList.remove('hide'); if (voice) speak(main + (sub ? '. ' + sub : ''));
+}
+function clearDock() { dock.innerHTML = ''; }
+function button(label, cls = 'act') { const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.textContent = label; dock.appendChild(b); return b; }
+function tapOnce(btn) { return new Promise(res => btn.addEventListener('click', () => { sfx.pop(); res(); }, { once: true })); }
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const JOBS = ['exName', 'dtName', 'bdName', 'mxName', 'crName'];
+function drawTrack(cur) {
+  const tr = $('track'); tr.innerHTML = '';
+  JOBS.forEach((k, i) => { const d = document.createElement('div'); d.className = 'step' + (i < cur ? ' done' : i === cur ? ' now' : ''); d.textContent = i + 1; d.title = t(k); tr.appendChild(d); });
+}
+$('speak').addEventListener('click', () => speak(lastLine));
+$('lang').addEventListener('click', () => {
+  LANG = 1 - LANG; try { localStorage.setItem('pbm-lang', LANG ? 'en' : 'id'); } catch (e) {}
+  $('lang').textContent = LANG ? 'ID' : 'EN'; document.documentElement.lang = LANG ? 'en' : 'id';
+  if (game.refresh) game.refresh();
+});
+$('lang').textContent = LANG ? 'ID' : 'EN';
+
+/* ---------------------------------------------------------------- three.js world */
+const canvas = $('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: /shot=1/.test(location.search) });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x9fd8ff);
+scene.fog = new THREE.Fog(0x9fd8ff, 26, 60);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8fae6a, 1.6));
+const sun = new THREE.DirectionalLight(0xfff3dc, 2.6); sun.position.set(6, 12, 8); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 }); sun.shadow.bias = -0.0006;
+scene.add(sun, sun.target);
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w < h ? 55 : 40; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+const mat = (c, r = .85) => new THREE.MeshStandardMaterial({ color: c, roughness: r });
+// ground: grass, with a sandy work strip along the jobs
+const grass = new THREE.Mesh(new THREE.PlaneGeometry(220, 80), mat(0x8fd16b)); grass.rotation.x = -Math.PI / 2; grass.receiveShadow = true; scene.add(grass);
+const strip = new THREE.Mesh(new THREE.PlaneGeometry(64, 9), mat(0xe9c98f)); strip.rotation.x = -Math.PI / 2; strip.position.set(22, .01, 0); strip.receiveShadow = true; scene.add(strip);
+// distant masjid silhouette (simple shapes) so the goal is visible
+(function masjid() {
+  const g = new THREE.Group(); const wall = mat(0xffffff, .7), dome = mat(0x2fbf71, .5);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 4), wall); base.position.y = 1.5; g.add(base);
+  const d = new THREE.Mesh(new THREE.SphereGeometry(1.8, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), dome); d.position.y = 3; g.add(d);
+  for (const x of [-3.6, 3.6]) { const m = new THREE.Mesh(new THREE.CylinderGeometry(.35, .4, 6, 16), wall); m.position.set(x, 3, 0); g.add(m);
+    const c = new THREE.Mesh(new THREE.ConeGeometry(.5, 1, 16), dome); c.position.set(x, 6.5, 0); g.add(c); }
+  g.position.set(52, 0, -14); g.traverse(o => { if (o.isMesh) { o.castShadow = true; } }); scene.add(g);
+})();
+// trees
+const treeGeo = new THREE.SphereGeometry(1, 16, 12), trunkGeo = new THREE.CylinderGeometry(.18, .22, 1.4, 10);
+for (let i = 0; i < 26; i++) {
+  const x = -10 + i * 3.1 + (i % 3) * .8, z = -9 - (i % 4) * 2.4;
+  const tr = new THREE.Mesh(trunkGeo, mat(0x8a5a33)); tr.position.set(x, .7, z);
+  const tp = new THREE.Mesh(treeGeo, mat(i % 2 ? 0x4fb35a : 0x63c46a)); tp.position.set(x, 1.9, z); tp.scale.setScalar(1.1 + (i % 3) * .2);
+  tr.castShadow = tp.castShadow = true; scene.add(tr, tp);
+}
+
+/* ---------------------------------------------------------------- tiny animation system */
+const tickers = new Set();
+const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+function tween(dur, fn) { return new Promise(res => { let el = 0; const k = { f(dt) { el += dt; const x = Math.min(el / dur, 1); fn(ease(x), x); if (x >= 1) { tickers.delete(k); res(); } } }; tickers.add(k); }); }
+function to(obj, prop, target, dur) { const a = obj[prop]; return tween(dur, e => { obj[prop] = a + (target - a) * e; }); }
+function vecTo(v, target, dur) { const a = v.clone(); return tween(dur, e => v.lerpVectors(a, target, e)); }
+const clock = new THREE.Clock();
+let camGoal = { pos: new THREE.Vector3(-3, 4, 9), look: new THREE.Vector3(0, 1, 0) }, camLook = new THREE.Vector3(0, 1, 0);
+function frame() {
+  const dt = Math.min(clock.getDelta(), .05);
+  for (const k of [...tickers]) k.f(dt);
+  if (ais.mixer) ais.mixer.update(dt);
+  camera.position.lerp(camGoal.pos, 1 - Math.pow(.02, dt)); camLook.lerp(camGoal.look, 1 - Math.pow(.02, dt)); camera.lookAt(camLook);
+  renderer.render(scene, camera);
+}
+renderer.setAnimationLoop(frame);
+function shot(pos, look) { camGoal = { pos: new THREE.Vector3(...pos), look: new THREE.Vector3(...look) }; }
+
+/* ---------------------------------------------------------------- loading */
+const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
+const V = {}; const ais = {};
+const NEED = [['Excavator'], ['DumpTruck'], ['Bulldozer'], ['CementMixer'], ['CraneTruck'], ['RoadRoller'], ['Tractor']];
+let loaded = 0; const totalFiles = NEED.length + 1;
+function bump() { loaded++; $('barFill').style.width = (loaded / totalFiles * 100) + '%'; }
+function prep(root) { root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); return root; }
+async function loadAll() {
+  $('loadTxt').textContent = t('loading');
+  const jobs = NEED.map(([n]) => loader.loadAsync(`assets/vehicles/${n}.glb`).then(g => { V[n] = prep(g.scene); bump(); }));
+  jobs.push(loader.loadAsync('assets/characters/BabyAis.glb').then(g => {
+    ais.root = prep(g.scene); ais.clips = g.animations; ais.mixer = new THREE.AnimationMixer(ais.root); bump();
+  }));
+  await Promise.all(jobs);
+}
+const pv = (veh, name) => V[veh].getObjectByName(name);
+function spinWheels(veh, speed) { const ws = []; V[veh].traverse(o => { if (o.name.startsWith('PV_Wheel')) ws.push(o); }); return dt => ws.forEach(w => w.rotation.x += speed * dt); }
+
+/* Ais: crossfading clips, scaled up to stand next to the toy vehicles */
+let aisAction = null;
+function aisPlay(name, { once = false, fade = .25 } = {}) {
+  const clip = THREE.AnimationClip.findByName(ais.clips, name); if (!clip) return Promise.resolve();
+  const a = ais.mixer.clipAction(clip); a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = once;
+  if (aisAction && aisAction !== a) aisAction.crossFadeTo(a, fade, false); a.play(); aisAction = a;
+  if (!once) return Promise.resolve();
+  return new Promise(res => { const h = e => { if (e.action === a) { ais.mixer.removeEventListener('finished', h); res(); } }; ais.mixer.addEventListener('finished', h); });
+}
+async function aisCelebrate() { const p = T.praise[Math.floor(Math.random() * T.praise.length)][LANG]; say(p); sfx.yes(); await aisPlay(Math.random() < .5 ? 'Cheer' : 'Clap', { once: true }); aisPlay('Idle'); }
+async function aisWalkTo(x, z, faceY = 0) {
+  const from = ais.root.position.clone(), dest = new THREE.Vector3(x, 0, z); const dist = from.distanceTo(dest); if (dist < .05) return;
+  ais.root.rotation.y = Math.atan2(dest.x - from.x, dest.z - from.z); aisPlay('Walk');
+  await vecTo(ais.root.position, dest, Math.max(.6, dist / 1.6)); ais.root.rotation.y = faceY; aisPlay('Idle');
+}
+
+/* ---------------------------------------------------------------- props */
+const dirtMat = mat(0x8a5a33, .95), rockMat = mat(0x7d6a5c, .9), cementMat = mat(0xb9bcc2, .9);
+function mound(x, z, s = 1) { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), dirtMat); m.scale.set(1.1 * s, .55 * s, 1.1 * s); m.position.set(x, 0, z); m.castShadow = m.receiveShadow = true; scene.add(m); return m; }
+function rock(r = .17) { const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), rockMat); m.castShadow = true; return m; }
+
+/* ---------------------------------------------------------------- the jobs */
+const game = { level: 0 };
+
+// JOB 1  Excavator digs 3 scoops into the dump truck
+async function job1() {
+  drawTrack(0); const E = V.Excavator, D = V.DumpTruck;
+  E.position.set(0, 0, 0); E.rotation.y = 0; scene.add(E);
+  D.position.set(2.3, 0, .2); D.rotation.y = 0; scene.add(D);
+  D.traverse(o => { if (o.isMesh && /Rock/.test(o.name)) o.visible = false; });
+  const pile = mound(0, 2.6, 1.05);
+  await aisWalkTo(-1.9, 1.6, Math.PI / 4); shot([-1.4, 3.2, 8.6], [.6, 1.0, .9]);
+  say(t('exName'), t('exFact')); aisPlay('Point', { once: true }).then(() => aisPlay('Idle')); await wait(2600);
+  say(t('exAsk')); const sw = pv('Excavator', 'PV_Swing'), bo = pv('Excavator', 'PV_Boom'), st = pv('Excavator', 'PV_Stick'), bu = pv('Excavator', 'PV_Bucket');
+  const bed = pv('DumpTruck', 'PV_Bed'); const loads = [];
+  for (let n = 0; n < 3; n++) {
+    clearDock(); const b = button(t('exBtn')); b.focus(); await tapOnce(b); b.disabled = true; sfx.engine(2.4);
+    // reach down into the pile
+    await Promise.all([to(sw.rotation, 'y', 0, .5), to(bo.rotation, 'x', .32, .9), to(st.rotation, 'x', .25, .9), to(bu.rotation, 'x', -.5, .9)]);
+    // curl the bucket: scoop
+    const clump = new THREE.Mesh(new THREE.SphereGeometry(.22, 14, 10), dirtMat); clump.castShadow = true; clump.position.set(0, -.08, .2); bu.add(clump);
+    await Promise.all([to(bu.rotation, 'x', .9, .6), to(pile.scale, 'y', pile.scale.y - .14, .6)]);
+    // lift and swing over the truck bed
+    await Promise.all([to(bo.rotation, 'x', -.55, .9), to(st.rotation, 'x', -.15, .9)]);
+    await to(sw.rotation, 'y', Math.PI / 2, 1.0);
+    // open the bucket: dirt drops into the bed
+    await to(bu.rotation, 'x', -.7, .45);
+    const wp = new THREE.Vector3(); clump.getWorldPosition(wp); bu.remove(clump); scene.add(clump); clump.position.copy(wp);
+    const local = new THREE.Vector3(-.25 + n * .25, .28, .55 + (n % 2) * .3); const target = bed.localToWorld(local.clone());
+    await vecTo(clump.position, target, .45); sfx.thud(); scene.remove(clump); clump.position.copy(local); bed.add(clump); loads.push(clump);
+    await Promise.all([to(sw.rotation, 'y', 0, .9), to(bo.rotation, 'x', 0, .9), to(st.rotation, 'x', 0, .9), to(bu.rotation, 'x', 0, .9)]);
+    if (n < 2) { say(t('exMore')); aisPlay('Clap', { once: true }).then(() => aisPlay('Idle')); }
+  }
+  clearDock(); scene.remove(pile); await aisCelebrate(); loads.forEach(l => bed.remove(l));
+}
+
+// JOB 2  Dump truck: count the rocks, drive, tip them out
+async function job2() {
+  drawTrack(1); const D = V.DumpTruck; const bed = pv('DumpTruck', 'PV_Bed'); const wheels = spinWheels('DumpTruck', 6);
+  const n = 2 + Math.floor(Math.random() * 4); const rocks = [];
+  for (let i = 0; i < n; i++) { const r = rock(.2); r.position.set(-.3 + (i % 3) * .3, .32 + Math.floor(i / 3) * .2, .45 + (i % 2) * .45 + Math.floor(i / 3) * .2); bed.add(r); rocks.push(r); }
+  D.position.set(9, 0, .2); D.rotation.y = 0; scene.add(D);
+  await aisWalkTo(7.4, 2.0, .5); shot([8.6, 4.4, 6.2], [9.2, 1.0, .6]);
+  say(t('dtName'), t('dtFact')); await wait(2600); say(t('dtAsk')); aisPlay('Point', { once: true }).then(() => aisPlay('Idle'));
+  clearDock(); const choices = [...new Set([n, Math.max(1, n - 1), n + 1, Math.min(6, n + 2)])].sort((a, b) => a - b);
+  await new Promise(res => choices.forEach(c => { const b = button(String(c), 'num'); b.addEventListener('click', () => {
+    if (c === n) { b.classList.add('yes'); sfx.yes(); res(); } else { b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); sfx.no(); say(t('dtWrong')); }
+  }); }));
+  say(t('dtGo')); await aisPlay('ThumbsUp', { once: true }); aisPlay('Idle');
+  clearDock(); const tip = button(t('dtBtn')); await tapOnce(tip); tip.disabled = true;
+  // drive forward (wheels turn), then tip the bed
+  tickers.add({ f: wheels }); const wk = [...tickers].pop(); sfx.engine(1.4); shot([11.6, 4.0, 6.4], [12.4, 1, 0]);
+  await to(D.position, 'x', 12.6, 1.6); D.rotation.y = 0; tickers.delete(wk);
+  // turn so the tail faces the pile spot, then raise the bed
+  await to(D.rotation, 'y', -Math.PI / 2, .8);
+  await to(bed.rotation, 'x', -.75, 1.2);
+  const pileAt = D.localToWorld(new THREE.Vector3(0, 0, -2.1));
+  await Promise.all(rocks.map((r, i) => { const wp = new THREE.Vector3(); r.getWorldPosition(wp); bed.remove(r); scene.add(r); r.position.copy(wp);
+    return wait(i * 90).then(() => vecTo(r.position, new THREE.Vector3(pileAt.x + (i % 3 - 1) * .35, .17, pileAt.z + (i / 3 | 0) * .35), .6)).then(sfx.thud); }));
+  await to(bed.rotation, 'x', 0, .9); clearDock(); await aisCelebrate();
+  game.cleanup.push(() => rocks.forEach(r => scene.remove(r)));
+}
+
+// JOB 3  Bulldozer pushes three dirt bumps flat
+async function job3() {
+  drawTrack(2); const B = V.Bulldozer; const blade = pv('Bulldozer', 'PV_Blade');
+  B.position.set(18, 0, -1.6); B.rotation.y = 0; scene.add(B);
+  const bumps = [mound(18, 1.0, .6), mound(18, 2.6, .7), mound(18, 4.2, .6)];
+  await aisWalkTo(16.0, 2.4, Math.PI / 2); shot([21.8, 4.6, 6.4], [18, .8, 1.3]);
+  say(t('bdName'), t('bdFact')); await to(blade.rotation, 'x', -.25, .6); await to(blade.rotation, 'x', 0, .6); await wait(1800);
+  say(t('bdAsk'));
+  for (let i = 0; i < 3; i++) {
+    clearDock(); const b = button(t('bdBtn')); await tapOnce(b); b.disabled = true; sfx.engine(1.2);
+    await to(blade.rotation, 'x', .05, .3);
+    const bump = bumps[i]; const goalZ = bump.position.z - 1.15;
+    await Promise.all([to(B.position, 'z', goalZ, 1.1), tween(1.1, e => { bump.scale.y = .55 * (i === 1 ? .7 : .6) * (1 - e * .92); bump.position.z += 0.004; })]);
+    sfx.thud(); await to(blade.rotation, 'x', -.2, .3);
+  }
+  clearDock(); await aisCelebrate(); game.cleanup.push(() => bumps.forEach(m => scene.remove(m)));
+}
+
+// JOB 4  Cement mixer: spin the drum 3 times, then pour a slab
+async function job4() {
+  drawTrack(3); const M = V.CementMixer; const drum = pv('CementMixer', 'PV_Drum');
+  M.position.set(27.6, 0, .4); M.rotation.y = Math.PI; scene.add(M);
+  const frameG = new THREE.Group(); const plank = mat(0xb5793f);
+  for (const [x, z, w, d] of [[0, -1.1, 2.6, .12], [0, 1.1, 2.6, .12], [-1.3, 0, .12, 2.3], [1.3, 0, .12, 2.3]]) { const p = new THREE.Mesh(new THREE.BoxGeometry(w, .18, d), plank); p.position.set(x, .09, z); p.castShadow = true; frameG.add(p); }
+  frameG.position.set(27.6, 0, -2.6); scene.add(frameG);
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(2.5, .16, 2.1), cementMat); slab.position.set(27.6, .02, -2.6); slab.scale.y = .01; slab.receiveShadow = true; scene.add(slab);
+  await aisWalkTo(25.4, .8, Math.PI / 2); shot([31.4, 4.4, 5.6], [27.8, 1, -.6]);
+  say(t('mxName'), t('mxFact')); await tween(2.2, (e, x) => { drum.rotation.y += .05; }); say(t('mxAsk'));
+  let spins = 0;
+  while (spins < 3) {
+    clearDock(); const b = button(`${t('mxBtn')}  ${spins}/3`); await tapOnce(b); b.disabled = true; sfx.engine(.9);
+    const start = drum.rotation.y; await to(drum.rotation, 'y', start + Math.PI * 2, 1.0); spins++;
+  }
+  clearDock(); const p = button(t('mxPour')); await tapOnce(p); p.disabled = true;
+  const spin = { f: dt => drum.rotation.y += dt * 5 }; tickers.add(spin);
+  await tween(2.0, e => { slab.scale.y = Math.max(.01, e); slab.position.y = .02 + .08 * e; }); tickers.delete(spin);
+  clearDock(); await aisCelebrate(); game.cleanup.push(() => { scene.remove(frameG); scene.remove(slab); });
+  game.slab = slab;
+}
+
+// JOB 5  Crane lifts the three playground blocks by colour onto the slab spot
+async function job5() {
+  drawTrack(4); const C = V.CraneTruck; const sw = pv('CraneTruck', 'PV_Swing'), boom = pv('CraneTruck', 'PV_Boom'), hook = pv('CraneTruck', 'PV_Hook');
+  C.position.set(36.8, 0, .6); C.rotation.y = Math.PI; scene.add(C);
+  const hookRest = hook.position.y;
+  const cols = [['red', 0xe5322d], ['yellow', 0xffbb00], ['blue', 0x2f7de1]];
+  const blocks = cols.map(([k, c], i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(.75, .5, .75), mat(c, .6)); m.position.set(34.6 + i * 1.1, .25, -2.2); m.castShadow = true; m.userData.k = k; scene.add(m); return m; });
+  const buildAt = new THREE.Vector3(37.6, 0, -2.6); let stackH = 0;
+  // cable drawn each frame from the sheave down to the hook
+  const cableMat = new THREE.LineBasicMaterial({ color: 0x222222 }); const cableG = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+  const cable = new THREE.Line(cableG, cableMat); scene.add(cable); const tip = new THREE.Vector3(), hp = new THREE.Vector3();
+  const cableTick = { f: () => { boom.localToWorld(tip.set(0, .55, -2.25)); hook.getWorldPosition(hp); cableG.setFromPoints([tip.clone(), hp.clone().add(new THREE.Vector3(0, .25, 0))]); } };
+  tickers.add(cableTick); hook.visible = true;
+  await aisWalkTo(33.2, .9, Math.PI / 2); shot([36.4, 6.0, 7.6], [36.2, 1.4, -1.2]);
+  say(t('crName'), t('crFact')); await to(boom.rotation, 'x', -.12, .8); await to(boom.rotation, 'x', 0, .6); await wait(1400);
+  const order = [...blocks].sort(() => Math.random() - .5);
+  for (const want of order) {
+    const k = want.userData.k; say(`${t('crAsk')} ${t(k)}!`);
+    clearDock(); const remaining = blocks.filter(b => !b.userData.done);
+    await new Promise(res => remaining.forEach(bl => { const b = button('', 'chip'); b.style.background = '#' + bl.material.color.getHexString(); b.setAttribute('aria-label', t(bl.userData.k));
+      b.addEventListener('click', () => { if (bl === want) { sfx.yes(); res(); } else { sfx.no(); b.classList.add('no'); say(t('crWrong')); setTimeout(() => say(`${t('crAsk')} ${t(k)}!`, '', false), 1400); } }); }));
+    clearDock();
+    // slew the crane so the hook sits over the chosen block, lower, attach, lift, slew to the build spot, lower
+    const aim = async (p) => { const local = C.worldToLocal(p.clone()); const ang = Math.atan2(local.x, -local.z); await to(sw.rotation, 'y', ang, 1.1); };
+    await aim(want.position); sfx.engine(1.0);
+    const hw = new THREE.Vector3(); hook.getWorldPosition(hw); const drop = hw.y - (want.position.y + .55);
+    await to(hook.position, 'y', hookRest - drop / (C.scale.y || 1), 1.0);
+    want.position.set(0, -.5, 0); hook.add(want); want.rotation.set(0, 0, 0); sfx.pop();
+    await to(hook.position, 'y', hookRest, 1.0); await aim(buildAt);
+    hook.getWorldPosition(hw); const drop2 = hw.y - (stackH + .55 + .25);
+    await to(hook.position, 'y', hookRest - drop2, 1.0);
+    const wp = new THREE.Vector3(); want.getWorldPosition(wp); hook.remove(want); scene.add(want); want.position.set(buildAt.x, stackH + .25, buildAt.z); want.userData.done = true; stackH += .5; sfx.thud();
+    await to(hook.position, 'y', hookRest, .8);
+    if (want !== order[order.length - 1]) { aisPlay('Clap', { once: true }).then(() => aisPlay('Idle')); }
+  }
+  await to(sw.rotation, 'y', 0, 1.0); tickers.delete(cableTick); scene.remove(cable); await aisCelebrate();
+  game.cleanup.push(() => blocks.forEach(b => scene.remove(b)));
+}
+
+// FINALE  the playground appears, Ais cheers
+const fin = {};
+async function finale() {
+  drawTrack(5);
+  const g = new THREE.Group(); const red = mat(0xe5322d, .5), yel = mat(0xffbb00, .5), blu = mat(0x2f7de1, .5), wht = mat(0xffffff, .6);
+  // slide
+  const ladder = new THREE.Mesh(new THREE.BoxGeometry(.9, 2.2, .12), blu); ladder.position.set(-1.6, 1.1, 0); ladder.rotation.z = -.15; g.add(ladder);
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(1.2, .14, 1.2), yel); deck.position.set(-1.1, 2.1, 0); g.add(deck);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(.95, .9, 4), red); roof.position.set(-1.1, 3.4, 0); roof.rotation.y = Math.PI / 4; g.add(roof);
+  for (const [x, z] of [[-1.6, -.5], [-.6, -.5], [-1.6, .5], [-.6, .5]]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 2.9, 10), wht); p.position.set(x, 1.45, z); g.add(p); }
+  const slide = new THREE.Mesh(new THREE.BoxGeometry(.8, .1, 3.0), red); slide.position.set(.6, 1.1, 0); slide.rotation.z = -.62; slide.rotation.y = Math.PI / 2; g.add(slide);
+  // swing set
+  const frameMat = blu; for (const x of [1.8, 3.8]) for (const s of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, 2.6, 10), frameMat); leg.position.set(x, 1.2, s * .5); leg.rotation.x = s * .35; g.add(leg); }
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, 2.2, 10), frameMat); top.rotation.z = Math.PI / 2; top.position.set(2.8, 2.45, 0); g.add(top);
+  const seats = [2.3, 3.3].map(x => { const sg = new THREE.Group(); sg.position.set(x, 2.45, 0);
+    for (const dx of [-.22, .22]) { const r = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, 1.6, 6), wht); r.position.set(dx, -.8, 0); sg.add(r); }
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(.6, .08, .3), yel); seat.position.y = -1.6; sg.add(seat); g.add(sg); return sg; });
+  g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  g.position.set(46, 0, -2.4); g.scale.setScalar(.01); scene.add(g); fin.g = g;
+  game.cleanup.push(() => scene.remove(g));
+  await aisWalkTo(44.2, 1.4, Math.PI / 4); shot([45.6, 4.6, 8.2], [46.8, 1.6, -1.6]);
+  sfx.yes(); await tween(1.1, e => g.scale.setScalar(.01 + .99 * (1 - Math.pow(1 - e, 3) * Math.cos(e * 6) ))); g.scale.setScalar(1);
+  const swing = { f: dt => { fin.ti = (fin.ti || 0) + dt; seats.forEach((s, i) => s.rotation.x = Math.sin(fin.ti * 2 + i) * .45); } }; tickers.add(swing); game.cleanup.push(() => tickers.delete(swing));
+  confetti(new THREE.Vector3(46.5, 3, -2));
+  say(t('finale')); await aisPlay('Cheer', { once: true }); aisPlay('Wave');
+  clearDock(); const again = button(t('again')); await tapOnce(again);
+}
+function confetti(at) {
+  const cols = [0xe5322d, 0xffbb00, 0x2f7de1, 0x2fbf71, 0xff5a9a]; const g = new THREE.Group(); scene.add(g); const parts = [];
+  for (let i = 0; i < 90; i++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(.12, .07), new THREE.MeshBasicMaterial({ color: cols[i % 5], side: THREE.DoubleSide }));
+    m.position.copy(at); m.userData.v = new THREE.Vector3((Math.random() - .5) * 5, 4 + Math.random() * 4, (Math.random() - .5) * 5); g.add(m); parts.push(m); }
+  let life = 0; const k = { f: dt => { life += dt; parts.forEach(p => { p.userData.v.y -= 9 * dt; p.position.addScaledVector(p.userData.v, dt); p.rotation.x += dt * 6; p.rotation.y += dt * 4; if (p.position.y < .05) { p.position.y = .05; p.userData.v.set(0, 0, 0); } }); if (life > 6) { tickers.delete(k); scene.remove(g); } } };
+  tickers.add(k);
+}
+
+/* ---------------------------------------------------------------- flow */
+game.cleanup = [];
+function resetWorld() {
+  game.cleanup.forEach(f => { try { f(); } catch (e) {} }); game.cleanup = [];
+  for (const n in V) { scene.remove(V[n]); V[n].traverse(o => { if (o.name.startsWith('PV_')) { o.rotation.set(0, 0, 0); } }); }
+  const hook = pv('CraneTruck', 'PV_Hook'); hook.userData.y0 ??= hook.position.y; hook.position.y = hook.userData.y0;
+  // parked decor vehicles
+  V.RoadRoller.position.set(13.6, 0, -4.4); V.RoadRoller.rotation.y = .6; scene.add(V.RoadRoller);
+  V.Tractor.position.set(31.2, 0, -5.0); V.Tractor.rotation.y = -.5; scene.add(V.Tractor);
+}
+async function run() {
+  while (true) {
+    resetWorld(); ais.root.position.set(-4.2, 0, 3.2); ais.root.rotation.y = Math.PI / 4; aisPlay('Wave');
+    shot([-2.6, 3.0, 9.4], [-1.0, 1.2, 1.5]); drawTrack(0);
+    say(t('hello')); await wait(2600);
+    const steps = [job1, job2, job3, job4, job5];
+    for (let i = 0; i < steps.length; i++) {
+      game.level = i; await steps[i]();
+      if (i < steps.length - 1) { say(t('jobDone')); clearDock(); const b = button(t('next')); await tapOnce(b); clearDock(); }
+    }
+    await finale(); clearDock();
+  }
+}
+game.refresh = () => { if (lastLine) sayTxt.firstChild && (sayTxt.firstChild.textContent = sayTxt.firstChild.textContent); };
+
+(async () => {
+  try {
+    await loadAll();
+    ais.root.scale.setScalar(3.1); scene.add(ais.root); aisPlay('Idle');
+    const eye = []; ais.root.traverse(o => { if (o.isMesh && o.material && /Eye/.test(o.material.name)) eye.push(o.material); });
+    eye.forEach(m => m.color.setRGB(.82, .62, .5));   // warm the iris back toward Ais' dark brown
+    resetWorld(); ais.root.position.set(-4.2, 0, 3.2); shot([-2.6, 3.0, 9.4], [-1.0, 1.2, 1.5]);
+    $('loadTxt').textContent = t('ready');
+    const card = $('card'); card.querySelector('.bar').remove();
+    const go = document.createElement('button'); go.type = 'button'; go.className = 'big'; go.id = 'go'; go.textContent = t('start'); card.appendChild(go);
+    window.__game = { V, ais, game, scene, camera, ready: true }; document.title = 'Proyek Baby Mo'; window.__ready = true;
+    await new Promise(r => go.addEventListener('click', r, { once: true }));
+    sfx.pop(); $('over').hidden = true; run();
+  } catch (e) {
+    console.error(e); $('loadTxt').textContent = t('fail'); $('loadTxt').className = 'err'; window.__fail = String(e);
+  }
+})();
+</script>
