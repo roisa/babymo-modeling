@@ -22,7 +22,7 @@ def principled(name, rgb, rough=0.35, coat=0.0, metal=0.0, spec=0.5):
     bs.inputs["Specular IOR Level"].default_value = spec
     return m
 M = dict(
-    yellow=principled("M_Toy_Yellow", (1.0, 0.36, 0.0), 0.3, coat=0.35),
+    yellow=principled("M_Toy_Yellow", (1.0, 0.51, 0.0), 0.3, coat=0.0, spec=0.08),   # matched to reference: mid rgb(253,187,2)
     dark=principled("M_Toy_DarkGrey", (0.035, 0.037, 0.04), 0.45, coat=0.2),
     rubber=principled("M_Toy_Rubber", (0.025, 0.026, 0.028), 0.62),
     grey=principled("M_Toy_SteelGrey", (0.22, 0.23, 0.25), 0.4, coat=0.25),
@@ -51,7 +51,7 @@ def stripe_mat(name, ca, cb, scale, spiral):
     mx = N("ShaderNodeMix"); mx.data_type = 'RGBA'; mx.inputs[6].default_value = (*ca, 1); mx.inputs[7].default_value = (*cb, 1)
     L(gt.outputs[0], mx.inputs[0]); L(mx.outputs[2], bs.inputs["Base Color"])
     return m
-M["drum"] = stripe_mat("M_Toy_MixerDrum", (0.9, 0.88, 0.84), (1.0, 0.36, 0.0), 3.0, 2.2)
+M["drum"] = stripe_mat("M_Toy_MixerDrum", (0.9, 0.88, 0.84), (1.0, 0.51, 0.0), 3.0, 2.2)
 # hazard stripes for the crane hook block (diagonal black/yellow)
 def hazard_mat(name):
     m = bpy.data.materials.new(name); nt = m.node_tree; N = nt.nodes.new; L = nt.links.new
@@ -398,7 +398,7 @@ for f in (excavator, dump_truck, bulldozer, crane_truck, cement_mixer, wheel_loa
 
 # ------------------------------------------------------------------ studio
 w = bpy.data.worlds.new("Studio"); sc.world = w
-bg = w.node_tree.nodes.get("Background"); bg.inputs["Color"].default_value = (1, 1, 1, 1); bg.inputs["Strength"].default_value = 0.35
+bg = w.node_tree.nodes.get("Background"); bg.inputs["Color"].default_value = (1, 1, 1, 1); bg.inputs["Strength"].default_value = 0.15
 st = bpy.data.collections.new("Studio"); sc.collection.children.link(st)
 for nm, loc, e, sz in (("Key", (-5, -6, 7), 2400, 4), ("Fill", (7, -4, 4), 900, 5), ("Rim", (2, 8, 6), 1300, 4)):
     ld = bpy.data.lights.new(nm, 'AREA'); ld.energy = e; ld.size = sz
@@ -408,6 +408,6 @@ bm = bmesh.new(); bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=12)
 fm = bpy.data.meshes.new("Floor"); bm.to_mesh(fm); bm.free()
 fl = bpy.data.objects.new("ShadowFloor", fm); st.objects.link(fl); fl.location = (0, 2, 0); fl.is_shadow_catcher = True
 sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.render.film_transparent = True
-sc.view_settings.view_transform = 'Standard'; sc.view_settings.look = 'None'; sc.view_settings.exposure = -0.2
+sc.view_settings.view_transform = 'Standard'; sc.view_settings.look = 'None'; sc.view_settings.exposure = -1.2
 bpy.ops.wm.save_as_mainfile(filepath=OUT, compress=True)
 print("BUILT", {c.name: len(c.objects) for c in sc.collection.children})
