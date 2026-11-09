@@ -33,6 +33,12 @@ M = dict(
     light=principled("M_Toy_Headlight", (1.0, 0.97, 0.9), 0.15, coat=1.0),
     orange=principled("M_Toy_Beacon", (1.0, 0.33, 0.0), 0.25, coat=0.5),
     rock=principled("M_Toy_Rock", (0.24, 0.11, 0.05), 0.55),
+    red=principled("M_Toy_Red", (0.85, 0.02, 0.015), 0.3, coat=0.0, spec=0.12),
+    green=principled("M_Toy_Green", (0.06, 0.45, 0.08), 0.32, coat=0.0, spec=0.12),
+    wood=principled("M_Toy_Wood", (0.42, 0.22, 0.08), 0.6),
+    card=principled("M_Toy_Cardboard", (0.62, 0.38, 0.16), 0.7),
+    blue_light=principled("M_Toy_BlueLight", (0.05, 0.25, 1.0), 0.2, coat=0.6),
+    red_light=principled("M_Toy_RedLight", (1.0, 0.05, 0.03), 0.2, coat=0.6),
 )
 # striped mixer drum: diagonal white/yellow bands
 def stripe_mat(name, ca, cb, scale, spiral):
@@ -119,10 +125,10 @@ def hydraulic(name, p0, p1, r=0.045, barrel_mat=None):
     rod(name + "_Rod", m - (m - p0).normalized() * 0.05, p1, r * 0.55, M["chrome"])
     for p in (p0, p1): cyl(name + "_Pin", r * 0.75, r * 2.6, p, M["dark"], rot=(0, 90, 0), bevel=0.006, segs=20)
 
-def scoop(name, width, radius, loc, rot, mat, thick=0.035, open_dir=(0, 0, 1), arc_keep=0.0, keep_axis=(0, 0, 1)):
+def scoop(name, width, radius, loc, rot, mat, thick=0.035, open_dir=(0, 0, 1), arc_keep=0.0, keep_axis=(0, 0, 1), caps=True):
     """Half-cylinder scoop (bucket / blade): axis along X, open side toward +local Z after bisect."""
     bm = bmesh.new()
-    bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=48, radius1=radius, radius2=radius, depth=width,
+    bmesh.ops.create_cone(bm, cap_ends=caps, cap_tris=False, segments=48, radius1=radius, radius2=radius, depth=width,
                           matrix=Matrix.Rotation(R(90), 4, 'Y'))
     bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], dist=1e-5,
                            plane_co=Vector(keep_axis) * arc_keep * radius, plane_no=open_dir, clear_outer=True)
@@ -200,10 +206,11 @@ def cab_glass(name, x0, x1, y0, y1, z0, z1, frame_mat, roof_mat, panes=("front",
             box(name + f"_Glass{tag}B", (0.02, sy * 0.38, gh), (xx, cy + sy * 0.27, gzc), M["glass"], bevel=0.02)
     box(name + "_Roof", (sx + roof_over * 2, sy + roof_over * 2, 0.07), (cx, cy, z1 + 0.03), roof_mat, bevel=0.03)
 
-def truck_cab(name, w, y0, y1, z0, z1):
+def truck_cab(name, w, y0, y1, z0, z1, body=None):
+    body = body or M["yellow"]
     """Cab-over truck cab with windshield, side windows, grille, headlights, bumper, mirrors."""
     sy, sz = y1 - y0, z1 - z0; cy, cz = (y0 + y1) / 2, (z0 + z1) / 2
-    box(name + "_Body", (w, sy, sz), (0, cy, cz), M["yellow"], bevel=0.09)
+    box(name + "_Body", (w, sy, sz), (0, cy, cz), body, bevel=0.09)
     box(name + "_Windshield", (w * 0.84, 0.03, sz * 0.36), (0, y0 - 0.005, z1 - sz * 0.27), M["glass"], bevel=0.03)
     for s in (1, -1):
         box(name + f"_SideWin{s}", (0.03, sy * 0.55, sz * 0.34), (s * (w / 2 + 0.005), cy - sy * 0.08, z1 - sz * 0.28), M["glass"], bevel=0.03)
@@ -213,7 +220,7 @@ def truck_cab(name, w, y0, y1, z0, z1):
     box(name + "_Grille", (w * 0.5, 0.03, sz * 0.22), (0, y0 - 0.008, z0 + sz * 0.36), M["dark"], bevel=0.02)
     for i in range(3):
         box(name + f"_Slat{i}", (w * 0.44, 0.03, 0.015), (0, y0 - 0.02, z0 + sz * (0.29 + 0.07 * i)), M["grey"], bevel=0.005)
-    box(name + "_Bumper", (w * 1.02, 0.12, sz * 0.13), (0, y0 - 0.02, z0 + sz * 0.08), M["yellow"], bevel=0.04)
+    box(name + "_Bumper", (w * 1.02, 0.12, sz * 0.13), (0, y0 - 0.02, z0 + sz * 0.08), body, bevel=0.04)
 
 def vehicle(name, origin):
     coll = bpy.data.collections.new(name); sc.collection.children.link(coll)
@@ -396,6 +403,130 @@ def wheel_loader():
 
 for f in (excavator, dump_truck, bulldozer, crane_truck, cement_mixer, wheel_loader): f()
 
+# ================================================================== 7 ROAD ROLLER
+def road_roller():
+    vehicle("RoadRoller", (-3.6, 7.6, 0))
+    cyl("Rol_Drum", 0.43, 1.2, (0, -0.72, 0.43), M["grey"], rot=(0, 90, 0), bevel=0.05, segs=56)
+    for s in (1, -1):
+        cyl(f"Rol_DrumCap{s}", 0.3, 0.04, (s * 0.61, -0.72, 0.43), M["yellow"], rot=(0, 90, 0), bevel=0.012)
+        cyl(f"Rol_DrumHub{s}", 0.1, 0.08, (s * 0.64, -0.72, 0.43), M["dark"], rot=(0, 90, 0), bevel=0.01)
+        box(f"Rol_YokeSide{s}", (0.08, 0.62, 0.55), (s * 0.7, -0.72, 0.62), M["yellow"], bevel=0.035)
+        wheel(f"Rol_Wheel{'L' if s > 0 else 'R'}", s * 0.56, 0.62, 0.4, 0.32, M["yellow"], tread=False, side=s)
+        box(f"Rol_RearFender{s}", (0.36, 0.7, 0.05), (s * 0.56, 0.62, 0.86), M["yellow"], bevel=0.02)
+    box("Rol_YokeTop", (1.48, 0.62, 0.12), (0, -0.72, 0.95), M["yellow"], bevel=0.04)
+    box("Rol_Body", (0.82, 1.15, 0.52), (0, 0.35, 0.72), M["yellow"], bevel=0.11)
+    box("Rol_Grille", (0.5, 0.03, 0.2), (0, 0.93, 0.74), M["dark"], bevel=0.02)
+    box("Rol_Step", (0.5, 0.25, 0.06), (0, -0.33, 0.5), M["dark"], bevel=0.02)
+    rod("Rol_Exhaust", (0.28, 0.75, 0.95), (0.28, 0.75, 1.32), 0.032, M["dark"])
+    box("Rol_Seat", (0.36, 0.3, 0.1), (0, 0.32, 1.05), M["dark"], bevel=0.04)
+    box("Rol_SeatBack", (0.36, 0.08, 0.3), (0, 0.48, 1.2), M["dark"], bevel=0.04)
+    rod("Rol_SteerCol", (0, 0.0, 0.98), (0, 0.1, 1.24), 0.02, M["dark"])
+    cyl("Rol_SteerWheel", 0.11, 0.025, (0, 0.1, 1.25), M["dark"], rot=(-25, 0, 0), bevel=0.01)
+    for x in (-0.38, 0.38):
+        for y in (-0.08, 0.6): rod(f"Rol_Post{x}{y}", (x, y, 0.98), (x, y, 1.72), 0.025, M["dark"])
+    box("Rol_Canopy", (0.95, 0.9, 0.07), (0, 0.26, 1.75), M["yellow"], bevel=0.03)
+    cyl("Rol_Beacon", 0.06, 0.09, (0, 0.26, 1.83), M["orange"], bevel=0.02, r2=0.045)
+
+# ================================================================== 8 TRACTOR
+def tractor():
+    vehicle("Tractor", (0, 7.6, 0))
+    for s in (1, -1):
+        wheel(f"Trac_RearWheel{'L' if s > 0 else 'R'}", s * 0.56, 0.42, 0.52, 0.34, M["yellow"], tread=True, side=s)
+        wheel(f"Trac_FrontWheel{'L' if s > 0 else 'R'}", s * 0.44, -0.78, 0.27, 0.2, M["yellow"], tread=True, side=s)
+        scoop(f"Trac_RearFender{s}", 0.4, 0.6, (s * 0.56, 0.42, 0.52), (0, 0, 0), M["yellow"], thick=0.035, open_dir=(0, 0, -1), arc_keep=-0.15, keep_axis=(0, 0, 1), caps=False)
+        box(f"Trac_Headlight{s}", (0.08, 0.03, 0.07), (s * 0.18, -1.16, 0.8), M["light"], bevel=0.015)
+    box("Trac_Hood", (0.52, 0.95, 0.42), (0, -0.66, 0.72), M["yellow"], bevel=0.1)
+    box("Trac_HoodTop", (0.46, 0.85, 0.06), (0, -0.62, 0.95), M["yellow"], bevel=0.03)
+    box("Trac_Grille", (0.34, 0.03, 0.3), (0, -1.14, 0.7), M["dark"], bevel=0.02)
+    for i in range(4): box(f"Trac_Slat{i}", (0.3, 0.03, 0.015), (0, -1.155, 0.6 + 0.065 * i), M["grey"], bevel=0.005)
+    box("Trac_FrontAxle", (0.75, 0.12, 0.1), (0, -0.78, 0.3), M["dark"], bevel=0.03)
+    box("Trac_Weights", (0.5, 0.14, 0.2), (0, -1.2, 0.42), M["dark"], bevel=0.03)
+    box("Trac_Body", (0.66, 0.65, 0.42), (0, 0.32, 0.78), M["yellow"], bevel=0.08)
+    cab_glass("Trac_Cab", -0.38, 0.38, 0.06, 0.72, 0.98, 1.68, M["dark"], M["yellow"])
+    rod("Trac_Exhaust", (-0.16, -0.5, 0.92), (-0.16, -0.5, 1.42), 0.032, M["dark"])
+    cyl("Trac_ExhaustCap", 0.042, 0.05, (-0.16, -0.5, 1.44), M["dark"], bevel=0.01)
+    box("Trac_Hitch", (0.3, 0.2, 0.1), (0, 0.85, 0.42), M["dark"], bevel=0.03)
+
+# ================================================================== 9 FORKLIFT
+def forklift():
+    vehicle("Forklift", (3.6, 7.6, 0))
+    for s in (1, -1):
+        wheel(f"Fork_FrontWheel{'L' if s > 0 else 'R'}", s * 0.43, -0.35, 0.27, 0.24, M["dark"], tread=False, side=s)
+        wheel(f"Fork_RearWheel{'L' if s > 0 else 'R'}", s * 0.4, 0.55, 0.22, 0.2, M["dark"], tread=False, side=s)
+    box("Fork_Body", (0.78, 1.15, 0.38), (0, 0.1, 0.48), M["yellow"], bevel=0.08)
+    box("Fork_Counterweight", (0.82, 0.32, 0.55), (0, 0.65, 0.58), M["yellow"], bevel=0.13)
+    box("Fork_Seat", (0.34, 0.3, 0.1), (0, 0.22, 0.75), M["dark"], bevel=0.04)
+    box("Fork_SeatBack", (0.34, 0.08, 0.3), (0, 0.38, 0.9), M["dark"], bevel=0.04)
+    rod("Fork_SteerCol", (0, -0.2, 0.68), (0, -0.08, 0.98), 0.02, M["dark"])
+    cyl("Fork_SteerWheel", 0.1, 0.025, (0, -0.08, 0.99), M["dark"], rot=(-25, 0, 0), bevel=0.01)
+    for x in (-0.36, 0.36):
+        for y in (-0.28, 0.45): rod(f"Fork_GuardPost{x}{y}", (x, y, 0.66), (x, y, 1.6), 0.03, M["dark"])
+    box("Fork_GuardRoof", (0.84, 0.82, 0.05), (0, 0.09, 1.62), M["dark"], bevel=0.02)
+    for i in range(4): box(f"Fork_GuardSlat{i}", (0.06, 0.75, 0.04), (-0.27 + 0.18 * i, 0.09, 1.66), M["dark"], bevel=0.01)
+    for s in (1, -1):
+        box(f"Fork_Mast{s}", (0.07, 0.09, 1.65), (s * 0.3, -0.62, 0.86), M["dark"], bevel=0.02)
+        box(f"Fork_Upright{s}", (0.11, 0.05, 0.42), (s * 0.18, -0.72, 0.42), M["grey"], bevel=0.015)
+        box(f"Fork_Tine{s}", (0.11, 0.62, 0.045), (s * 0.18, -1.02, 0.23), M["grey"], bevel=0.015)
+        hydraulic(f"Fork_TiltCyl{s}", (s * 0.34, -0.2, 0.55), (s * 0.34, -0.6, 0.9), 0.035)
+    for z in (0.12, 0.9, 1.65): box(f"Fork_MastBar{z}", (0.66, 0.06, 0.05), (0, -0.62, z), M["dark"], bevel=0.015)
+    rod("Fork_LiftCyl", (0, -0.58, 0.15), (0, -0.58, 1.3), 0.04, M["chrome"])
+    box("Fork_Carriage", (0.66, 0.05, 0.3), (0, -0.7, 0.4), M["grey"], bevel=0.02)
+    # pallet + cardboard box on the forks
+    for i in range(3): box(f"Fork_PalletTop{i}", (0.7, 0.16, 0.025), (0, -1.22 + 0.2 * i, 0.29), M["wood"], bevel=0.008)
+    for x in (-0.3, 0, 0.3): box(f"Fork_PalletBlock{x}", (0.08, 0.56, 0.035), (x, -1.02, 0.26), M["wood"], bevel=0.008)
+    box("Fork_Box", (0.56, 0.5, 0.42), (0, -1.02, 0.52), M["card"], bevel=0.02)
+    box("Fork_BoxTape", (0.58, 0.08, 0.005), (0, -1.02, 0.73), M["lightgrey"], bevel=0.002)
+
+# ================================================================== 10 GARBAGE TRUCK
+def garbage_truck():
+    vehicle("GarbageTruck", (-1.8, 11.6, 0))
+    box("Gar_Chassis", (0.8, 2.3, 0.2), (0, 0.15, 0.42), M["dark"], bevel=0.03)
+    truck_cab("Gar_Cab", 1.1, -1.12, -0.44, 0.4, 1.22, body=M["green"])
+    cyl("Gar_Beacon", 0.07, 0.1, (0, -0.8, 1.31), M["orange"], bevel=0.02, r2=0.05)
+    box("Gar_Body", (1.1, 1.38, 1.0), (0, 0.3, 1.0), M["green"], bevel=0.14)
+    box("Gar_BodyStripe", (1.12, 1.25, 0.1), (0, 0.3, 0.86), M["yellow"], bevel=0.03)
+    box("Gar_Tailgate", (1.06, 0.36, 0.95), (0, 1.12, 0.95), M["grey"], bevel=0.14)
+    box("Gar_Hopper", (0.85, 0.06, 0.32), (0, 1.32, 0.62), M["dark"], bevel=0.03)
+    for s in (1, -1):
+        for j, yy in enumerate((-0.68, 0.45, 0.88)):
+            wheel(f"Gar_Wheel{'L' if s > 0 else 'R'}{j}", s * 0.48, yy, 0.28, 0.23, M["lightgrey"], tread=False, side=s)
+        box(f"Gar_LiftArm{s}", (0.06, 0.06, 0.55), (s * 0.45, 1.33, 0.6), M["grey"], bevel=0.015)
+        box(f"Gar_Handrail{s}", (0.03, 0.03, 0.4), (s * 0.5, 1.3, 1.15), M["lightgrey"], bevel=0.008)
+    box("Gar_RearStep", (0.9, 0.18, 0.05), (0, 1.36, 0.36), M["dark"], bevel=0.015)
+    # wheelie bin on the lift
+    box("Gar_Bin", (0.36, 0.34, 0.46), (0.0, 1.62, 0.42), M["green"], bevel=0.05)
+    box("Gar_BinLid", (0.4, 0.38, 0.05), (0.0, 1.62, 0.68), M["green"], bevel=0.02)
+    for s in (1, -1): cyl(f"Gar_BinWheel{s}", 0.06, 0.04, (s * 0.15, 1.78, 0.06), M["dark"], rot=(0, 90, 0), bevel=0.01)
+
+# ================================================================== 11 FIRE TRUCK
+def fire_truck():
+    vehicle("FireTruck", (1.8, 11.6, 0))
+    box("Fire_Chassis", (0.8, 2.4, 0.2), (0, 0.2, 0.42), M["dark"], bevel=0.03)
+    truck_cab("Fire_Cab", 1.1, -1.12, -0.32, 0.4, 1.25, body=M["red"])
+    box("Fire_CabStripe", (1.12, 0.82, 0.07), (0, -0.72, 0.68), M["white"], bevel=0.02)
+    box("Fire_LightBar", (0.7, 0.14, 0.06), (0, -0.82, 1.3), M["white"], bevel=0.02)
+    for s, mat in ((1, "blue_light"), (-1, "red_light")): box(f"Fire_Light{s}", (0.26, 0.15, 0.08), (s * 0.2, -0.82, 1.36), M[mat], bevel=0.03)
+    box("Fire_Body", (1.08, 1.5, 0.82), (0, 0.48, 0.9), M["red"], bevel=0.1)
+    box("Fire_BodyStripe", (1.1, 1.42, 0.07), (0, 0.48, 0.66), M["white"], bevel=0.02)
+    for s in (1, -1):
+        for i in range(3):
+            box(f"Fire_Locker{s}{i}", (0.02, 0.4, 0.36), (s * 0.545, 0.0 + 0.48 * i, 1.0), M["lightgrey"], bevel=0.02)
+            for k_ in range(4): box(f"Fire_LockerSlat{s}{i}{k_}", (0.025, 0.36, 0.012), (s * 0.552, 0.0 + 0.48 * i, 0.88 + 0.08 * k_), M["grey"], bevel=0.003)
+        for j, yy in enumerate((-0.68, 0.55, 0.98)):
+            wheel(f"Fire_Wheel{'L' if s > 0 else 'R'}{j}", s * 0.48, yy, 0.28, 0.23, M["lightgrey"], tread=False, side=s)
+    cyl("Fire_HoseReel", 0.2, 0.3, (0, 1.28, 0.95), M["red"], rot=(0, 90, 0), bevel=0.02)
+    cyl("Fire_Hose", 0.17, 0.26, (0, 1.28, 0.95), M["white"], rot=(0, 90, 0), bevel=0.04)
+    # ladder on the roof
+    cyl("Fire_LadderTurntable", 0.2, 0.08, (0, 0.95, 1.36), M["lightgrey"], bevel=0.02)
+    for s in (1, -1): beam(f"Fire_LadderRail{s}", (s * 0.2, 1.0, 1.44), (s * 0.2, -1.05, 1.56), 0.05, 0.07, M["lightgrey"], bevel=0.015)
+    for i in range(12):
+        t = i / 11; y = 1.0 + (-1.05 - 1.0) * t; z = 1.44 + 0.12 * t
+        rod(f"Fire_Rung{i}", (-0.2, y, z), (0.2, y, z), 0.014, M["white"])
+    box("Fire_LadderRest", (0.5, 0.08, 0.08), (0, -0.62, 1.32), M["dark"], bevel=0.02)
+
+for f in (road_roller, tractor, forklift, garbage_truck, fire_truck): f()
+
+
 # ------------------------------------------------------------------ studio
 w = bpy.data.worlds.new("Studio"); sc.world = w
 bg = w.node_tree.nodes.get("Background"); bg.inputs["Color"].default_value = (1, 1, 1, 1); bg.inputs["Strength"].default_value = 0.15
@@ -404,7 +535,7 @@ for nm, loc, e, sz in (("Key", (-5, -6, 7), 2400, 4), ("Fill", (7, -4, 4), 900, 
     ld = bpy.data.lights.new(nm, 'AREA'); ld.energy = e; ld.size = sz
     lo = bpy.data.objects.new(nm, ld); st.objects.link(lo); lo.location = loc
     lo.rotation_euler = (Vector((0, 0, 0.6)) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
-bm = bmesh.new(); bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=12)
+bm = bmesh.new(); bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=24)
 fm = bpy.data.meshes.new("Floor"); bm.to_mesh(fm); bm.free()
 fl = bpy.data.objects.new("ShadowFloor", fm); st.objects.link(fl); fl.location = (0, 2, 0); fl.is_shadow_catcher = True
 sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.render.film_transparent = True

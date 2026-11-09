@@ -1,0 +1,11 @@
+Excavator
+DumpTruck
+Bulldozer
+CraneTruck
+CementMixer
+WheelLoader
+RoadRoller
+Tractor
+Forklift
+GarbageTruck
+FireTruck

@@ -7,7 +7,9 @@ S = int(sys.argv[3]) if len(sys.argv) > 3 else 32
 W, H = (int(sys.argv[4]), int(sys.argv[5])) if len(sys.argv) > 5 else (800, 560)
 bpy.ops.wm.open_mainfile(filepath=blend); sc = bpy.context.scene
 os.makedirs(out, exist_ok=True)
-NAMES = ["Excavator", "DumpTruck", "Bulldozer", "CraneTruck", "CementMixer", "WheelLoader"]
+NAMES = [c.name for c in sc.collection.children if c.name != "Studio"]
+NAMES_R = os.environ["ONLY"].split(",") if os.environ.get("ONLY") else NAMES
+LIGHTS = {o: o.location.copy() for o in bpy.data.collections["Studio"].objects if o.type == "LIGHT"}
 cd = bpy.data.cameras.new("Cam"); cam = bpy.data.objects.new("Cam", cd); sc.collection.objects.link(cam); sc.camera = cam
 cd.lens = 70
 sc.cycles.samples = S; sc.cycles.use_denoising = True
@@ -16,9 +18,11 @@ try: sc.render.image_settings.media_type = 'IMAGE'
 except Exception: pass
 sc.render.image_settings.file_format = 'PNG'; sc.render.image_settings.color_mode = 'RGBA'
 AZ = float(os.environ.get("AZ", "38"))
-for n in NAMES:
+os.makedirs(out, exist_ok=True); open(f"{out}/order.txt", "w").write("\n".join(NAMES_R))
+for n in NAMES_R:
     for c in NAMES: bpy.data.collections[c].hide_render = (c != n)
     root = bpy.data.objects[n + "_Root"]
+    for lo_, base in LIGHTS.items(): lo_.location = base + Vector((root.location.x, root.location.y, 0))
     pts = [o.matrix_world @ Vector(cn) for o in bpy.data.collections[n].objects if o.type in ('MESH', 'CURVE') for cn in o.bound_box]
     lo = Vector([min(p[i] for p in pts) for i in range(3)]); hi = Vector([max(p[i] for p in pts) for i in range(3)])
     ctr = (lo + hi) / 2; size = (hi - lo).length
