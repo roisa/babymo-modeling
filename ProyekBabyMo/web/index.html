@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Proyek Baby Mo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +19,8 @@
   --body: "Nunito", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }
-html, body { height: 100%; }
+html, body { height: 100%; margin: 0; }
+[hidden] { display: none !important; }
 body { background: var(--sky); color: var(--ink); font-family: var(--body); overflow: hidden; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 #game { position: fixed; inset: 0; }
 #c { width: 100%; height: 100%; display: block; }
@@ -270,6 +272,17 @@ const NEED = [['Excavator'], ['DumpTruck'], ['Bulldozer'], ['CementMixer'], ['Cr
 let loaded = 0; const totalFiles = NEED.length + 1;
 function bump() { loaded++; $('barFill').style.width = (loaded / totalFiles * 100) + '%'; }
 function prep(root) { root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); return root; }
+/* procedural paint the exporter can't carry: mixer drum spiral stripes, crane hook hazard stripes (vertex colours) */
+function paint(mesh, fn) {
+  const g = mesh.geometry, p = g.attributes.position, c = new Float32Array(p.count * 3), col = new THREE.Color();
+  for (let i = 0; i < p.count; i++) { fn(p.getX(i), p.getY(i), p.getZ(i), col); c[i * 3] = col.r; c[i * 3 + 1] = col.g; c[i * 3 + 2] = col.b; }
+  g.setAttribute('color', new THREE.BufferAttribute(c, 3)); mesh.material = mesh.material.clone(); mesh.material.vertexColors = true; mesh.material.color.set(0xffffff);
+}
+const YEL = new THREE.Color(0xffbb00), WHT = new THREE.Color(0xf2efe8), BLK = new THREE.Color(0x151515);
+function paintSpecials() {
+  V.CementMixer.traverse(o => { if (o.isMesh && o.name === 'Mix_Drum') paint(o, (x, y, z, c) => c.copy(Math.sin((Math.atan2(z, x) + y * 2.2) * 3) > 0 ? YEL : WHT)); });
+  V.CraneTruck.traverse(o => { if (o.isMesh && /Hazard/.test(o.name + (o.material && o.material.name))) paint(o, (x, y, z, c) => c.copy(Math.sin((x + y + z) * 45) > 0 ? YEL : BLK)); });
+}
 async function loadAll() {
   $('loadTxt').textContent = t('loading');
   const jobs = NEED.map(([n]) => loader.loadAsync(`assets/vehicles/${n}.glb`).then(g => { V[n] = prep(g.scene); bump(); }));
@@ -482,7 +495,7 @@ function confetti(at) {
 game.cleanup = [];
 function resetWorld() {
   game.cleanup.forEach(f => { try { f(); } catch (e) {} }); game.cleanup = [];
-  for (const n in V) { scene.remove(V[n]); V[n].traverse(o => { if (o.name.startsWith('PV_')) { o.rotation.set(0, 0, 0); } }); }
+  for (const n in V) { scene.remove(V[n]); V[n].traverse(o => { if (o.name.startsWith('PV_')) { o.userData.r0 ??= o.rotation.clone(); o.rotation.copy(o.userData.r0); } }); }
   const hook = pv('CraneTruck', 'PV_Hook'); hook.userData.y0 ??= hook.position.y; hook.position.y = hook.userData.y0;
   // parked decor vehicles
   V.RoadRoller.position.set(13.6, 0, -4.4); V.RoadRoller.rotation.y = .6; scene.add(V.RoadRoller);
@@ -506,7 +519,7 @@ game.refresh = () => { if (lastLine) sayTxt.firstChild && (sayTxt.firstChild.tex
 (async () => {
   try {
     await loadAll();
-    ais.root.scale.setScalar(3.1); scene.add(ais.root); aisPlay('Idle');
+    paintSpecials(); ais.root.scale.setScalar(3.1); scene.add(ais.root); aisPlay('Idle');
     const eye = []; ais.root.traverse(o => { if (o.isMesh && o.material && /Eye/.test(o.material.name)) eye.push(o.material); });
     eye.forEach(m => m.color.setRGB(.82, .62, .5));   // warm the iris back toward Ais' dark brown
     resetWorld(); ais.root.position.set(-4.2, 0, 3.2); shot([-2.6, 3.0, 9.4], [-1.0, 1.2, 1.5]);

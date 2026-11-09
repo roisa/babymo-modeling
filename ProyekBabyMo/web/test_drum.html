@@ -1,0 +1,12 @@
+<meta charset="utf-8"><script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.min.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
+<canvas id="c" width="800" height="560"></canvas>
+<script type="module">
+import * as THREE from 'three'; import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+const r = new THREE.WebGLRenderer({canvas: document.getElementById('c'), preserveDrawingBuffer: true}); const sc = new THREE.Scene(); sc.background = new THREE.Color(0xeeeeee);
+sc.add(new THREE.HemisphereLight(0xffffff, 0x888888, 3));
+const cam = new THREE.PerspectiveCamera(35, 800/560, .1, 50); cam.position.set(5, 2.5, 3); cam.lookAt(0, .8, 0);
+window.paintTest=1; const L = new GLTFLoader(); L.setMeshoptDecoder(MeshoptDecoder); const g = await L.loadAsync('assets/vehicles/CementMixer.glb'); sc.add(g.scene);
+const d = g.scene.getObjectByName('PV_Drum'); const out = { pv: d.rotation.toArray().slice(0,3).map(a => +(a*57.3).toFixed(1)), kids: [] };
+d.children.forEach(c => { const b = new THREE.Box3().setFromObject(c), s = b.getSize(new THREE.Vector3()); out.kids.push([c.name, c.rotation.toArray().slice(0,3).map(a => +(a*57.3).toFixed(1)), s.toArray().map(v => +v.toFixed(2))]); });
+r.render(sc, cam); window.__out = out; document.title = 'READY';
+</script>
