@@ -33,3 +33,9 @@ SAVE_LIB=$PWD/BabyMo_Tennis_Poses.blend RES=1200 SAMPLES=48 python scripts/tenni
 ONLY=05,13 RES=400 SAMPLES=8 python scripts/tennis_poses.py BABY_MO_v008.blend /tmp/test scripts   # quick drafts of chosen poses
 ```
 The same kit works for other sports: add a props file and a poses file.
+
+## 2D cartoon version
+- **PNGs:** `renders/tennis_2d/BabyMo_Tennis2D_NN_name.png`, the same 20 poses as flat cartoon art: two-tone cel shading, flat colours and a dark outline, 1200 × 1200 with a transparent background.
+- **Overview and zip:** `renders/BabyMo_Tennis2D_Sheet.png` and `renders/BabyMo_Tennis2D_20_Poses_PNG.zip`.
+- **Made by:** `scripts/toon2d.py` reads `BabyMo_Tennis_Poses.blend`. It converts every material to a Toon shader with a flat ambient fill and adds a Freestyle outline (the racket strings get none).
+  Re-render with: `LOOK=None EXPO=0.45 python scripts/toon2d.py BabyMo_Tennis_Poses.blend renders/tennis_2d`
